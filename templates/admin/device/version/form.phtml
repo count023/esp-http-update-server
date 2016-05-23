@@ -1,0 +1,45 @@
+<?php include('../templates/includes/html-head.phtml'); ?>
+
+<h1>Binär-Datei für einen ESP8266 mit httpUpdate bereitstellen:</h1>
+
+<?php
+     # echo '<pre><code>';
+     # var_dump($data);
+     # echo '</code></pre>';
+?><br>
+<form action="" method="post" accept-charset="UTF-8" enctype="multipart/form-data" class="form form--upload">
+    <fieldset class="form__fieldset form__fieldset--type-select <?php echo !empty($data['msgs']['mac']) ? 'form__fieldset--error' : '' ?>">
+        <label class="form__field__label" for="mac">MAC (STA-MAC):</label>
+        <select class="form__field form__field--type-select" name="mac" id="mac" disabled>
+            <?php foreach($data['devices'] as $device) { ?>
+                <option value="<?php echo $device->getMac() ?>" <?php echo $device->getMac() === $data['staMac'] ? 'selected' : '' ?>><?php echo $device->getMac() ?></option>
+            <?php } ?>
+        </select>
+        <p class="form__field__error-message"><?php !empty($data['msgs']['mac']) ? $data['msgs']['mac'] : '' ?></p>
+    </fieldset>
+    <fieldset class="form__fieldset form__fieldset--type-text <?php echo !empty($data['msgs']['version']) ? 'form__fieldset--error' : '' ?>">
+        <label class="form__field__label" for="version">Version:</label>
+        <input class="form__field form__field--type-text" type="text" placeholder="0.0" value="<?php echo $data['formData']['version'] ?>" name="version" id="version">
+        <p class="form__field__error-message"><?php echo !empty($data['msgs']['version']) ? $data['msgs']['version'] : '' ?></p>
+    </fieldset>
+    <fieldset class="form__fieldset form__fieldset--type-text <?php echo !empty($data['msgs']['softwareName']) ? 'form__fieldset--error' : '' ?>">
+        <label class="form__field__label" for="softwareName">Software Name:</label>
+        <input class="form__field form__field--type-text" type="text" placeholder="CavAir" value="<?php echo $data['formData']['softwareName'] ?>" name="softwareName" id="softwareName">
+        <p class="form__field__error-message"><?php echo !empty($data['msgs']['softwareName']) ? $data['msgs']['softwareName'] : '' ?></p>
+    </fieldset>
+    <fieldset class="form__fieldset form__fieldset--type-textarea <?php echo !empty($data['msgs']['description']) ? 'form__fieldset--error' : '' ?>">
+        <label class="form__field__label" for="description">Beschreibung:</label>
+        <textarea class="form__field form__field--type-textarea" placeholder="- added Software-Feataures" name="description" id="description"><?php echo $data['formData']['description'] ?></textarea>
+        <p class="form__field__error-message"><?php echo !empty($data['msgs']['description']) ? $data['msgs']['description'] : '' ?></p>
+    </fieldset>
+    <fieldset class="form__fieldset form__fieldset--type-file <?php echo !empty($data['msgs']['file']) ? 'form__fieldset--error' : '' ?>">
+        <label class="form__field__label" for="file">Binär-Datei:</label>
+        <input class="form__field form__field--type-file" type="file" name="file" id="file" accept=".bin,application/octet-stream">
+        <p class="form__field__error-message"><?php echo !empty($data['msgs']['file']) ? $data['msgs']['file'] : '' ?></p>
+    </fieldset>
+    <fieldset class="form__fieldset form__fieldset--type-button">
+        <button class="form__field form__field--type-button--submit" type="submit">Senden</button>
+    </fieldset>
+</form>
+
+<?php include('../templates/includes/html-foot.phtml'); ?>

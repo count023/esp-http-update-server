@@ -1,0 +1,22 @@
+<?php include('../templates/includes/html-head.phtml'); ?>
+
+<?php if (!empty($data['msg'])) { ?>
+	<p class="message"><?php echo $data['msg']; ?></p>
+<?php } ?>
+
+<dl class="device-detail">
+	<di class="device-detail--mac__header">Mac</di>
+	<dd class="device-detail--mac"><?php echo $data['device']->getMac() ?></dd>
+	<di class="device-detail--type__header">Type</di>
+	<dd class="device-detail--type"><?php echo $data['device']->getType() ?></dd>
+	<di class="device-detail--info__header">Info</di>
+	<dd class="device-detail--info"><p><?php echo $data['device']->getInfo() ?></p></dd>
+</dl>
+
+<ul class="page-navigation">
+	<li><form action="/admin/device/<?php echo $data['device']->getMac(); ?>/delete" method="post"><button type="submit">Löschen</button></form></li>
+	<li><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/edit">Ändern</a></li>
+	<li><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/version/new">Neue Version anlegen</a></li>
+</ul>
+
+<?php include('../templates/includes/html-foot.phtml'); ?>

@@ -1,0 +1,65 @@
+
+* {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12pt;
+}
+
+body {
+	padding: 150px 1em 1em 1em;
+	position: relative;
+}
+
+nav {
+	position: absolute;
+	top: 0;
+}
+
+.form {
+	background-color: rgba(255, 255, 255, 1);
+	border: 1px solid rgba(128, 128, 128, .3);
+	border-radius: 5px;
+	box-shadow: 0 0 6px rgba(128, 128, 128, .7);
+	color: #222;
+	width: 95%;
+}
+
+.form .form__fieldset {
+	background-color: rgba(255, 255, 255, 1);
+	border: 1px solid rgba(128, 128, 128, .3);
+	border-radius: 3px;
+	box-shadow: 0 0 3px rgba(128, 128, 128, .7);
+	margin: 9px;
+}
+
+.form .form__fieldset .form__field__label {
+	display: block;
+	margin-bottom: .75em;
+}
+
+.form .form__fieldset .form__field {
+	width: 95%;
+	padding: 2px;
+	box-shadow: 0 0 3px rgba(128, 128, 128, .7);
+}
+.form .form__fieldset.form__fieldset--error .form__field  {
+	background-color: rgba(255, 128, 128, .6);
+}
+
+.form .form__fieldset .form__field.form__field--type-select {
+	width: 97%;
+}
+.form .form__fieldset .form__field.form__field--type-textarea {
+	width: 97%;
+	height: 7em;
+}
+
+
+.form .form__fieldset .form__field__error-message {
+	display: none;
+	color: #F00;
+	font-weight: bold;
+	font-style: italic;
+}
+.form .form__fieldset.form__fieldset--error .form__field__error-message {
+	display: block;
+}

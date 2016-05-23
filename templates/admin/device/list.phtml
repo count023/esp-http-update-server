@@ -1,0 +1,29 @@
+<?php include('../templates/includes/html-head.phtml'); ?>
+
+    <h1>Liste der bekannten ESPs</h1>
+<?php
+    # echo '<pre><code>';
+    # var_dump($data);
+    # echo '</code></pre>';
+
+    if (!empty($data['msg'])) {
+?>
+    <p class="messages"><?php echo $data['msg']; ?></p>
+<?php
+    }
+?>
+    <ul class="devices-list">
+<?php
+    foreach($data['devices'] as $device) {
+?>
+        <li class="devices-list__item">
+            <h2 class="devices-list__item__mac"><a href="/admin/device/<?php echo $device->getMac() ?>"><?php echo $device->getMac() ?></a></h2>
+            <p class="devices-list__item__type"><?php echo $device->getType() ?></p>
+            <p class="devices-list__item__info"><?php echo str_replace(array("\r\n", "\n", "\r"), '<br>', $device->getInfo()) ?></p>
+        </li>
+<?php
+    }
+?>
+    </ul>
+
+<?php include('../templates/includes/html-foot.phtml'); ?>

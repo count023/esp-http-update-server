@@ -1,0 +1,17 @@
+/vendor/
+/logs/*
+!/logs/README.md
+
+# ignore local test-results ... 
+/test-results/
+
+# ignore any local data
+/data/**
+!/data/.keep
+
+# ignore composer for MacOsX
+mac-composer
+
+# ignore real password file
+src/admin-users.php
+
