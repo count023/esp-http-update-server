@@ -1,6 +1,5 @@
 <?php include('../templates/includes/html-head.phtml'); ?>
 
-    <h1>Liste der bekannten ESPs</h1>
 <?php
     # echo '<pre><code>';
     # var_dump($data);
@@ -8,10 +7,12 @@
 
     if (!empty($data['msg'])) {
 ?>
-    <p class="messages"><?php echo $data['msg']; ?></p>
+    <p class="message"><?php echo $data['msg']; ?></p>
 <?php
     }
 ?>
+
+    <h1>Liste der bekannten ESPs</h1>
     <ul class="devices-list">
 <?php
     foreach($data['devices'] as $device) {

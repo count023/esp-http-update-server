@@ -3,22 +3,27 @@
 <h1>ESP8266 für httpUpdate einrichten:</h1>
 
 <?php
-    # echo '<pre><code>';
-    # var_dump($data);
-    # echo '</code></pre>';
+    if (array_key_exists('msgs', $data)) {
+        $msgMac = array_key_exists('mac', $data['msgs']) ? $data['msgs']['mac'] : '';
+        $msgType = array_key_exists('type', $data['msgs']) ? $data['msgs']['type'] : '';
+        $msgInfo = array_key_exists('info', $data['msgs']) ? $data['msgs']['info'] : '';
+    } else {
+        $msgMac = $msgType = $msgInfo = '';
+    }
+    $staMac = array_key_exists('staMac', $data) ? $data['staMac'] : '';
 ?><br>
 <form action="" method="post" accept-charset="UTF-8" enctype="multipart/form-data" class="form form--upload">
 <?php
-    if (!empty($data['staMac'])) {
+    if (!empty($staMac)) {
 ?>
-    <input type="hidden" name="staMac" value="<?php echo $data['staMac']; ?>">
+    <input type="hidden" name="staMac" value="<?php echo $staMac; ?>">
 <?php
     }
 ?>
     <fieldset class="form__fieldset form__fieldset--type-text <?php echo !empty($data['msgs']['mac']) ? 'form__fieldset--error' : '' ?>">
         <label class="form__field__label" for="softwareName">MAC (STA-MAC):</label>
         <input class="form__field form__field--type-text" type="text" placeholder="14:14:14:14:14:14" value="<?php echo $data['device']->getMac() ?>" name="mac" id="mac">
-        <p class="form__field__error-message"><?php echo $data['msgs']['mac'] ?></p>
+        <p class="form__field__error-message"><?php echo $msgMac ?></p>
     </fieldset>
     <fieldset class="form__fieldset form__fieldset--type-select <?php echo !empty($data['msgs']['type']) ? 'form__fieldset--error' : '' ?>">
         <label class="form__field__label" for="mac">Typ:</label>
@@ -28,12 +33,12 @@
             <option value="ESP-32"<?php echo $data['device']->getType() === 'ESP-32' ? 'selected' : '' ?>>ESP-32</option>
             <option value="ESP v3"<?php echo $data['device']->getType() === 'ESP v3' ? 'selected' : '' ?>>ESP v3</option>
         </select>
-        <p class="form__field__error-message"><?php $data['msgs']['type'] ?></p>
+        <p class="form__field__error-message"><?php $msgType ?></p>
     </fieldset>
     <fieldset class="form__fieldset form__fieldset--type-textarea <?php echo !empty($data['msgs']['deviceInfo']) ? 'form__fieldset--error' : '' ?>">
-        <label class="form__field__label" for="deviceInfo">ESP-Name/Nummer, Standort:</label>
-        <textarea class="form__field form__field--type-textarea" placeholder="Mehr Informationen zum ESP" name="deviceInfo" id="deviceInfo"><?php echo $data['device']->getInfo() ?></textarea>
-        <p class="form__field__error-message"><?php echo $data['msgs']['deviceInfo'] ?></p>
+        <label class="form__field__label" for="info">ESP-Name/Nummer, Standort:</label>
+        <textarea class="form__field form__field--type-textarea" placeholder="Mehr Informationen zum ESP" name="info" id="info"><?php echo $data['device']->getInfo() ?></textarea>
+        <p class="form__field__error-message"><?php echo $msgInfo ?></p>
     </fieldset>
     <fieldset class="form__fieldset form__fieldset--type-button">
         <button class="form__field form__field--type-button--submit" type="submit">Senden</button>

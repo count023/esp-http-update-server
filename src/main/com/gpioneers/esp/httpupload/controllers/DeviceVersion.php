@@ -51,8 +51,7 @@ class DeviceVersion {
                 'admin/device/version/form.phtml',
                 array_merge([
                     'defaults' => $defaults,
-                    'device' => $this->parentRepository->getAll(),
-                    'router' => $this->ci->router,
+                    'devices' => $this->parentRepository->getAll(),
                     'formData' => $formData
                 ], $args)
             );

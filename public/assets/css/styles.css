@@ -63,3 +63,8 @@ nav {
 .form .form__fieldset.form__fieldset--error .form__field__error-message {
 	display: block;
 }
+
+.message {
+	font-weight: bold;
+	font-style: italic;
+}

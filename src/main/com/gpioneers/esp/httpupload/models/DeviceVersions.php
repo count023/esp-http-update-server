@@ -27,23 +27,25 @@ class DeviceVersions {
         $deviceVersions = array();
 
         // load versions from basePath
-        $basePathContent = scandir($this->getDeviceDirectoryPath($device));
-        if ($basePathContent !== false) {
-            $versionDirs = array_filter(
-                $basePathContent,
-                function ($path) use ($device) {
-                    return $path !== '.' && $path !== '..' && !is_file($this->getDeviceDirectoryPath($device) . $path) && $this->isValidVersion($path);
-                }
-            );
-            foreach ($versionDirs as $version) {
-                $deviceVersion = $this->load($device, $version);
-                if ($deviceVersion->isExisting() && $deviceVersion->isValid()) {
-                    $deviceVersions[] = $deviceVersion;
+        if (is_readable($this->getDeviceDirectoryPath($device))) {
+            $basePathContent = scandir($this->getDeviceDirectoryPath($device));
+            if ($basePathContent !== false) {
+                $versionDirs = array_filter(
+                    $basePathContent,
+                    function ($path) use ($device) {
+                        return $path !== '.' && $path !== '..' && !is_file($this->getDeviceDirectoryPath($device) . $path) && $this->isValidVersion($path);
+                    }
+                );
+                foreach ($versionDirs as $version) {
+                    $deviceVersion = $this->load($device, $version);
+                    if ($deviceVersion->isExisting() && $deviceVersion->isValid()) {
+                        $deviceVersions[] = $deviceVersion;
+                    }
                 }
             }
         }
         return $deviceVersions;
-    }   
+    }
 
 
     public function save(Device $device, DeviceVersion $deviceVersion, UploadedFileInterface $uploadedFile) {
@@ -54,11 +56,11 @@ class DeviceVersions {
 
         $deviceVersionInfoFileHandle = fopen($this->getDeviceVersionInfoPath($device, $deviceVersion), 'w');
         if ($deviceVersionInfoFileHandle === false) {
-            // @codeCoverageIgnoreStart 
+            // @codeCoverageIgnoreStart
             // not testable; file needs to be changed externaly to come into this state
             throw new \Exception('Can not open deviceVersionInfoFile: ' . $this->getDeviceVersionInfoPath($device, $deviceVersion));
-            // @codeCoverageIgnoreEnd 
-            
+            // @codeCoverageIgnoreEnd
+
         }
         $writtenBytes = fwrite($deviceVersionInfoFileHandle, $this->getDeviceVersionInfoAsJson($deviceVersion));
 
@@ -72,8 +74,8 @@ class DeviceVersions {
     }
 
     public function update(Device $device, DeviceVersion $currentDeviceVersion, DeviceVersion $newDeviceVersion, UploadedFileInterface $uploadedFile) {
-        
-        // @TODO: rename() is not working for not empty directories ... try call system ... 
+
+        // @TODO: rename() is not working for not empty directories ... try call system ...
         if ($currentDeviceVersion->getVersion() !== $newDeviceVersion->getVersion()) {
 
             $oldPath = str_replace(':', '\:', $this->getDeviceVersionDirectoryPath($device, $currentDeviceVersion));
@@ -89,10 +91,10 @@ class DeviceVersions {
             // if a new binary file is provided, simply delete the old one to be able to move the new one at same location
             if (!unlink($this->getDeviceVersionImagePath($device, $newDeviceVersion))) {
                 // bubble up error
-                // @codeCoverageIgnoreStart 
+                // @codeCoverageIgnoreStart
                 // not testable; file needs to be changed externaly to come into this state
                 throw new \Exception('Failed deleting image-file of version ' . $newDeviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
-                // @codeCoverageIgnoreEnd 
+                // @codeCoverageIgnoreEnd
             }
         }
 
@@ -110,34 +112,37 @@ class DeviceVersions {
             throw new \Exception('Invalid device given to load! (isExisting: ' . ($device->isExisting() ? 'true' : 'false') . ' isValid: ' . ($device->isValid() ? 'true' : 'false') . ')');
         }
 
-        if (!$this->isValidVersion($version)) {
-            throw new \Exception('Invalid version given to load!');
-        }
-
         $deviceVersion = new DeviceVersion($version, $this->logger);
 
-        // populate the deviceVersion...
-        if (is_dir($this->getDeviceVersionDirectoryPath($device, $deviceVersion))) {
-            // load deviceInfo from basePath
-            if (is_file($this->getDeviceVersionInfoPath($device, $deviceVersion))) {
+        if ($version !== null) {
 
-                $infoFileHandle = fopen($this->getDeviceVersionInfoPath($device, $deviceVersion), 'r');
-                if ($infoFileHandle !== false) {
-                    $infoFileJson = json_decode(
-                        fread(
-                            $infoFileHandle,
-                            filesize($this->getDeviceVersionInfoPath($device, $deviceVersion))
-                        )
-                    );
-                    $deviceVersion->setSoftwareName($infoFileJson->softwareName);
-                    $deviceVersion->setDescription($infoFileJson->description);
-                }
-                if (is_file($this->getDeviceVersionImagePath($device, $deviceVersion))) {
-                    $deviceVersion->setValid(true);
-                }
+            if (!$this->isValidVersion($version)) {
+                throw new \Exception('Invalid version given to load!');
             }
 
-            $deviceVersion->setExisting(true);
+            // populate the deviceVersion...
+            if (is_dir($this->getDeviceVersionDirectoryPath($device, $deviceVersion))) {
+                // load deviceInfo from basePath
+                if (is_file($this->getDeviceVersionInfoPath($device, $deviceVersion))) {
+
+                    $infoFileHandle = fopen($this->getDeviceVersionInfoPath($device, $deviceVersion), 'r');
+                    if ($infoFileHandle !== false) {
+                        $infoFileJson = json_decode(
+                            fread(
+                                $infoFileHandle,
+                                filesize($this->getDeviceVersionInfoPath($device, $deviceVersion))
+                            )
+                        );
+                        $deviceVersion->setSoftwareName($infoFileJson->softwareName);
+                        $deviceVersion->setDescription($infoFileJson->description);
+                    }
+                    if (is_file($this->getDeviceVersionImagePath($device, $deviceVersion))) {
+                        $deviceVersion->setValid(true);
+                    }
+                }
+
+                $deviceVersion->setExisting(true);
+            }
         }
 
         return $deviceVersion;
@@ -203,13 +208,13 @@ class DeviceVersions {
                 if (@rmdir($this->getDeviceVersionDirectoryPath($device, $deviceVersion))) {
                     $this->logger->addInfo('Deleted directory of version ' . $deviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
                 }
-                // @codeCoverageIgnoreStart 
+                // @codeCoverageIgnoreStart
                 // not testable; file needs to be changed externaly to come into this state
                 else {
                     // bubble up error
                     throw new \Exception('Failed deleting directory of version ' . $deviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
                 }
-                // @codeCoverageIgnoreEnd 
+                // @codeCoverageIgnoreEnd
             } else {
                 // bubble up error
                 throw new \Exception('Failed deleting image-file of version ' . $deviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
@@ -217,7 +222,7 @@ class DeviceVersions {
         } else {
             // bubble up error
             throw new \Exception('Failed deleting info-file of version ' . $deviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
-        } 
+        }
     }
 
     public function isValidVersion($version) {
