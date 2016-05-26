@@ -180,7 +180,34 @@ class Device {
         $msgs = $this->repository->validate($formData, false);
         if (!empty($msgs)) {
 
-            return $this->showForm($request, $response, [ 'msgs' => $msgs, 'formData' => $formData ]);
+            $currentDevice = $this->repository->load($formData['staMac']);
+            $newDevice = null;
+            if (!empty($msgs['mac'])) {
+                $newDevice = $this->repository->load(null);
+                $newDevice->setMac($formData['mac']);
+            } else {
+                $newDevice = $this->repository->load($formData['mac']);
+            }
+            $newDevice->setType($formData['type']);
+            $newDevice->setInfo($formData['info']);
+
+            if ($currentDevice->getMac() !== $newDevice->getMac() && $newDevice->isExisting()) {
+
+                $msgs['mac'] = 'You tried to change the mac-address of the device, but the new mac-address already exists!';
+                // resetting the mac-address to the old valid one!
+                $newDevice->setMac($currentDevice->getMac());
+            }
+
+            return $this->ci->renderer->render(
+                $response,
+                'admin/device/form.phtml',
+                array_merge([
+                    'defaults' => $defaults,
+                    'device' => $newDevice,
+                    'msgs' => $msgs,
+                    'formData' => $formData
+                ], $args)
+            );
 
         } else {
 
@@ -201,30 +228,15 @@ class Device {
                     array_merge([
                         'defaults' => $defaults,
                         'device' => $newDevice,
-                        'msgs' => $msgs
+                        'msgs' => $msgs,
+                        'formData' => $formData
                     ], $args)
                 );
 
             } else {
 
                 $success = $this->repository->update($currentDevice, $newDevice);
-
-                // redirect to device page and show success message
-                $newResponse = $this->read(
-                    $request,
-                    $response,
-                    array(
-                        'defaults' => $defaults,
-                        'staMac' => $formData['mac'],
-                        'msg' => ($success ? 'Sucessfully updated' : 'Updating failed')
-                    )
-                );
-
-                if ($formData['staMac'] !== $formData['mac']) {
-                    return $newResponse->withStatus(302)->withHeader('Location', '/admin/device/' . $formData['mac'] . '');
-                } else {
-                    return $newResponse;
-                }
+                return $response->withStatus(302)->withHeader('Location', '/admin/device/' . $formData['mac'] . '?msg=' . ($success ? 'Sucessfully updated' : 'Updating failed'));
             }
         }
     }
