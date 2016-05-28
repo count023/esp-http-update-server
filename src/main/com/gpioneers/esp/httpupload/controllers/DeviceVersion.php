@@ -254,6 +254,8 @@ class DeviceVersion {
                   $this->ci->logger->addError('Failed to delete device version of device ' . $device->getMac() . ' with version ' . $deviceVersion->getVersion() . ' by authorzed user named: \'' . $userName . '\'');
                   return $response->withStatus(500)->withHeader('Location', '/admin/devices?msg=' . 'Unknown error occurred when trying to delete device ' . $device->getMac());
               }
+              $this->ci->logger->addInfo('Deleted device version of device ' . $device->getMac() . ' version ' . $deviceVersion->getVersion() . ' by authorzed user named: \'' . $userName . '\'');
+              return $response->withStatus(404)->withHeader('Location', '/admin/device/' . $device->getMac() . '?msg=' . 'Sucessfully deleted version of device (' . $device->getMac() . ') version (' . $args['version'] . ')');
           } else {
               $this->ci->logger->addError('Request to delete not existing device version of device ' . $device->getMac() . ' with version ' . $deviceVersion->getVersion() . ' by authorzed user named: \'' . $userName . '\'');
               return $response->withStatus(404)->withHeader('Location', '/admin/devices?msg=' . 'Trial to delete unknown device (' . $device->getMac() . ') version (' . $args['version'] . ')');

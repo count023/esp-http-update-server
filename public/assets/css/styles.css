@@ -1,70 +1,175 @@
 
 * {
-	font-family: Arial, Helvetica, sans-serif;
-	font-size: 12pt;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12pt;
 }
 
 body {
-	padding: 150px 1em 1em 1em;
-	position: relative;
+    padding: 150px 1em 1em 1em;
+    position: relative;
 }
 
 nav {
-	position: absolute;
-	top: 0;
+    position: absolute;
+    top: 0;
 }
 
 .form {
-	background-color: rgba(255, 255, 255, 1);
-	border: 1px solid rgba(128, 128, 128, .3);
-	border-radius: 5px;
-	box-shadow: 0 0 6px rgba(128, 128, 128, .7);
-	color: #222;
-	width: 95%;
+    background-color: rgba(255, 255, 255, 1);
+    border: 1px solid rgba(128, 128, 128, .3);
+    border-radius: 5px;
+    box-shadow: 0 0 6px rgba(128, 128, 128, .7);
+    color: #222;
+    width: 95%;
 }
 
 .form .form__fieldset {
-	background-color: rgba(255, 255, 255, 1);
-	border: 1px solid rgba(128, 128, 128, .3);
-	border-radius: 3px;
-	box-shadow: 0 0 3px rgba(128, 128, 128, .7);
-	margin: 9px;
+    background-color: rgba(255, 255, 255, 1);
+    border: 1px solid rgba(128, 128, 128, .3);
+    border-radius: 3px;
+    box-shadow: 0 0 3px rgba(128, 128, 128, .7);
+    margin: 9px;
 }
 
 .form .form__fieldset .form__field__label {
-	display: block;
-	margin-bottom: .75em;
+    display: block;
+    margin-bottom: .75em;
 }
 
 .form .form__fieldset .form__field {
-	width: 95%;
-	padding: 2px;
-	box-shadow: 0 0 3px rgba(128, 128, 128, .7);
+    width: 95%;
+    padding: 2px;
+    box-shadow: 0 0 3px rgba(128, 128, 128, .7);
 }
 .form .form__fieldset.form__fieldset--error .form__field  {
-	background-color: rgba(255, 128, 128, .6);
+    background-color: rgba(255, 128, 128, .6);
 }
 
 .form .form__fieldset .form__field.form__field--type-select {
-	width: 97%;
+    width: 97%;
 }
 .form .form__fieldset .form__field.form__field--type-textarea {
-	width: 97%;
-	height: 7em;
+    width: 97%;
+    height: 7em;
 }
 
 
 .form .form__fieldset .form__field__error-message {
-	display: none;
-	color: #F00;
-	font-weight: bold;
-	font-style: italic;
+    display: none;
+    color: #F00;
+    font-weight: bold;
+    font-style: italic;
 }
 .form .form__fieldset.form__fieldset--error .form__field__error-message {
-	display: block;
+    display: block;
 }
 
 .message {
-	font-weight: bold;
+    font-weight: bold;
+    font-style: italic;
+}
+
+.devices-list {
+    list-style: none;
+		margin: 0;
+		padding: 0;
+}
+
+.devices-list .devices-list__item {
+    position: relative;
+		padding: 20px 0 0 25%;
+		background-color: rgba(128, 178, 128, .7);
+		border-radius: 10px;
+		border: 1px solid #0f0;
+		margin: 0 0 20px;
+}
+.devices-list .devices-list__item:after,
+.detail .detail__device:after,
+.detail .detail__device-version:after {
+	content: "";
+	background-repeat: no-repeat;
+	background-size: 90% auto;
+	background-position: left center;
+	opacity: .8;
+	top: 1em;
+	left: 0;
+	bottom: 1em;
+	right: 73%;
+	position: absolute;
+	z-index: 1;
+}
+
+.devices-list .devices-list__item.esp-01:after,
+.detail .detail__device.esp-01:after {
+    background-image: url(../images/esp-01.png);
+}
+.devices-list .devices-list__item.esp-32:after,
+.detail .detail__device.esp-32:after {
+    background-image: url(../images/esp-32.png);
+}
+.devices-list .devices-list__item.esp-201:after,
+.detail .detail__device.esp-201:after {
+    background-image: url(../images/esp-201.png);
+}
+.devices-list .devices-list__item.esp-v3:after,
+.detail .detail__device.esp-v3:after {
+    background-image: url(../images/esp-v3.png);
+}
+
+.detail .detail__device {
+	position: relative;
+	padding: 20px 0 0 25%;
+	background-color: rgba(128, 178, 128, .7);
+	border-radius: 10px;
+	border: 2px solid #0f0;
+	margin: 0 0 20px;
+}
+
+.detail .detail__device-version {
+	position: relative;
+	padding: 20px 0 0 25%;
+	border: 1px solid red;
+	border-radius: 10px;
+	background-color: rgba(178, 128, 128, .7);
+	margin: 0 0 20px;
+}
+
+.detail .detail__device-version:after {
+	background-size: 50% auto;
+	background-position: 38% center;
+	background-image: url(../images/binary.png);
+	opacity: .8;
+}
+
+.detail .detail__device__header,
+.detail .detail__device-version__header {
+	font-size: .7em;
 	font-style: italic;
+}
+
+.detail .detail__device__data.detail__device--info p,
+.detail .detail__device-version .detail__device-version--description p {
+	margin-top: 0;
+}
+
+.page-navigation {
+	list-style: none;
+	padding: 0;
+}
+
+.page-navigation .page-navigation__item {
+	float: left;
+	margin-right: 10px;
+}
+
+.page-navigation .button {
+	border: 1px solid grey;
+	border-radius: 5px;
+	background-color: lightgrey;
+	color: black;
+	display: inline-block;
+	box-sizing: border-box;
+	margin: 5px 1%;
+	padding: 3px;
+	text-decoration: none;
 }

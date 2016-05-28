@@ -4,34 +4,38 @@
 	<p class="message"><?php echo $data['msg']; ?></p>
 <?php } ?>
 
-<dl class="device-detail">
-	<di class="device-detail--mac__header">Mac</di>
-	<dd class="device-detail--mac"><?php echo $data['device']->getMac() ?></dd>
-	<di class="device-detail--type__header">Type</di>
-	<dd class="device-detail--type"><?php echo $data['device']->getType() ?></dd>
-	<di class="device-detail--info__header">Info</di>
-	<dd class="device-detail--info"><p><?php echo $data['device']->getInfo() ?></p></dd>
-</dl>
+<h1>List of known binary versions for <?php echo $data['device']->getMac(); ?></h1>
+
+<div class="detail">
+		<dl class="detail__device <?php echo strtolower($data['device']->getType()) ?>">
+			<di class="detail__device__header detail__device--mac">Mac</di>
+			<dd class="detail__device__data detail__device--mac"><?php echo $data['device']->getMac() ?></dd>
+			<di class="detail__device__header detail__device--type">Type</di>
+			<dd class="detail__device__data detail__device--type"><?php echo $data['device']->getType() ?></dd>
+			<di class="detail__device__header detail--info">Info</di>
+			<dd class="detail__device__data detail__device--info"><p><?php echo $data['device']->getInfo() ?></p></dd>
+		</dl>
 
 <?php
 	foreach ($data['device']->getVersions() as $deviceVersion) {
 ?>
-<dl class="detail detail__device-version">
-    <di class="detail__device-version--version__header">Version</di>
-    <dd class="detail__device-version--version"><?php echo $deviceVersion->getVersion() ?></dd>
-    <di class="detail__device-version--software-name__header">Software-Name</di>
-    <dd class="detail__device-version--software-name"><?php echo $deviceVersion->getSoftwareName() ?></dd>
-    <di class="detail__device-version--description__header">Beschreibung</di>
-    <dd class="detail__device-version--description"><p><?php echo $deviceVersion->getDescription() ?></p></dd>
-</dl>
+		<dl class="detail__device-version">
+		    <di class="detail__device-version__header detail__device-version--version">Version</di>
+		    <dd class="detail__device-version--version"><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/version/<?php echo $deviceVersion->getVersion() ?>"><?php echo $deviceVersion->getVersion() ?></a></dd>
+		    <di class="detail__device-version__header detail__device-version--software-name">Software-Name</di>
+		    <dd class="detail__device-version--software-name"><?php echo $deviceVersion->getSoftwareName() ?></dd>
+		    <di class="detail__device-version__header detail__device-version--description">Description</di>
+		    <dd class="detail__device-version--description"><p><?php echo $deviceVersion->getDescription() ?></p></dd>
+		</dl>
 <?php
 	}
 ?>
+</div>
 
 <ul class="page-navigation">
-	<li><form action="/admin/device/<?php echo $data['device']->getMac(); ?>/delete" method="post"><button type="submit">Löschen</button></form></li>
-	<li><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/edit">Ändern</a></li>
-	<li><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/version/new">Neue Version anlegen</a></li>
+	<li class="page-navigation__item"><form action="/admin/device/<?php echo $data['device']->getMac(); ?>/delete" method="post"><button type="submit" class="button button--delete">Delete device</button></form></li>
+	<li class="page-navigation__item"><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/edit" class="button button--edit">Edit device</a></li>
+	<li class="page-navigation__item"><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/version/new" class="button button--add-subitem">Add new version</a></li>
 </ul>
 
 <?php include('../templates/includes/html-foot.phtml'); ?>
