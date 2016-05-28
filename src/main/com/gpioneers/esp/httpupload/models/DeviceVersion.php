@@ -34,10 +34,10 @@ class DeviceVersion {
 
     public function __construct($version, LoggerInterface $logger) {
         $this->version = $version;
-    	$this->logger = $logger;
+        $this->logger = $logger;
     }
 
-	public function getVersion() {
+    public function getVersion() {
     	return $this->version;
     }
     /**

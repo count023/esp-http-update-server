@@ -1,0 +1,29 @@
+<?php include('../templates/includes/html-head.phtml'); ?>
+
+<?php if (!empty($data['msg'])) { ?>
+    <p class="message"><?php echo $data['msg']; ?></p>
+<?php } ?>
+
+<dl class="detail detail__device">
+    <di class="detail__device--mac__header">Mac</di>
+    <dd class="detail__device--mac"><a href="/admin/device/<?php echo $data['device']->getMac(); ?>"><?php echo $data['device']->getMac() ?></a></dd>
+    <di class="detail__device--type__header">Type</di>
+    <dd class="detail__device--type"><?php echo $data['device']->getType() ?></dd>
+    <di class="detail__device--info__header">Info</di>
+    <dd class="detail__device--info"><p><?php echo $data['device']->getInfo() ?></p></dd>
+</dl>
+<dl class="detail detail__device-version">
+    <di class="detail__device-version--version__header">Version</di>
+    <dd class="detail__device-version--version"><?php echo $data['deviceVersion']->getVersion() ?></dd>
+    <di class="detail__device-version--software-name__header">Software-Name</di>
+    <dd class="detail__device-version--software-name"><?php echo $data['deviceVersion']->getSoftwareName() ?></dd>
+    <di class="detail__device-version--description__header">Beschreibung</di>
+    <dd class="detail__device-version--description"><p><?php echo $data['deviceVersion']->getDescription() ?></p></dd>
+</dl>
+
+<ul class="page-navigation">
+    <li><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/version/<?php echo $data['deviceVersion']->getVersion() ?>/edit">Ändern</a></li>
+    <li><form action="/admin/device/<?php echo $data['device']->getMac(); ?>/version/<?php echo $data['deviceVersion']->getVersion() ?>/delete" method="post"><button type="submit">Löschen</button></form></li>
+</ul>
+
+<?php include('../templates/includes/html-foot.phtml'); ?>

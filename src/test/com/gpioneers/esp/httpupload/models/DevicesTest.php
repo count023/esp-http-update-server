@@ -1,15 +1,17 @@
 <?php
 
+namespace com\gpioneers\esp\httpupload\models;
+
 use com\gpioneers\esp\httpupload\models\Devices;
 use com\gpioneers\esp\httpupload\models\Device;
 
-class DevicesTest extends PHPUnit_Framework_TestCase {
+class DevicesTest extends \PHPUnit_Framework_TestCase {
 
     private $logger;
 
     protected function setup() {
-        $loggerHandler = new Monolog\Handler\TestHandler();
-        $this->logger = new Monolog\Logger('testLogger', array($loggerHandler));
+        $loggerHandler = new \Monolog\Handler\TestHandler();
+        $this->logger = new \Monolog\Logger('testLogger', array($loggerHandler));
     }
 
     protected function tearDown() {
@@ -233,65 +235,6 @@ class DevicesTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals('info', $device->getInfo());
         $this->assertTrue($device->isExisting());
         $this->assertTrue($device->isValid());
-    }
-
-    /**
-     * @test
-     */
-    public function validateCompletelyEmpty() {
-
-        $devicesRepository = new Devices($this->logger);
-        $msgs = $devicesRepository->validate(array());
-
-        $this->assertEquals('Keine Mac-Adresse angegeben!', $msgs['mac']);
-        $this->assertEquals('Keine ESP-Version angegeben!', $msgs['type']);
-        $this->assertEquals('Keine weiteren Informationen zum ESP angegeben!', $msgs['deviceInfo']);
-    }
-
-    /**
-     * @test
-     */
-    public function validateInvalidMac() {
-
-        $devicesRepository = new Devices($this->logger);
-        $msgs = $devicesRepository->validate(array('mac' => 'invalid'));
-
-        $this->assertEquals('Ungültige Mac-Adresse angegeben!', $msgs['mac']);
-        $this->assertEquals('Keine ESP-Version angegeben!', $msgs['type']);
-        $this->assertEquals('Keine weiteren Informationen zum ESP angegeben!', $msgs['deviceInfo']);
-    }
-
-    /**
-     * @test
-     */
-    public function validateExistingMac() {
-
-        mkdir(DATA_DIR . '22:22:22:22:22:22', 0775);
-        $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/info.json', 'w');
-        fwrite($fileHandle, '{"type":"type","info":"info"}');
-        fclose($fileHandle);
-
-        $devicesRepository = new Devices($this->logger);
-        $msgs = $devicesRepository->validate(array('mac' => '22:22:22:22:22:22'));
-
-        $this->assertEquals('Device mit dieser Mac-Adresse existiert bereits!', $msgs['mac']);
-        $this->assertEquals('Keine ESP-Version angegeben!', $msgs['type']);
-        $this->assertEquals('Keine weiteren Informationen zum ESP angegeben!', $msgs['deviceInfo']);
-    }
-
-    /**
-     * @test
-     */
-    public function validateValid() {
-
-        $devicesRepository = new Devices($this->logger);
-        $msgs = $devicesRepository->validate(array(
-            'mac' => '22:22:22:22:22:22',
-            'type' => 'type',
-            'deviceInfo' => 'info'
-        ));
-
-        $this->assertEmpty($msgs);
     }
 
     /**

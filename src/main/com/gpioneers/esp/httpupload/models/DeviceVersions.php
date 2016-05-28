@@ -19,7 +19,7 @@ class DeviceVersions {
     private $imageFileName = 'image.bin';
 
     public function __construct(LoggerInterface $logger) {
-    	$this->logger = $logger;
+        $this->logger = $logger;
     }
 
     public function getAll(Device $device) {
@@ -64,10 +64,14 @@ class DeviceVersions {
         }
         $writtenBytes = fwrite($deviceVersionInfoFileHandle, $this->getDeviceVersionInfoAsJson($deviceVersion));
 
-        if ($uploadedFile->getError() === UPLOAD_ERR_OK) {
-            $uploadedFile->moveTo($this->getDeviceVersionImagePath($device, $deviceVersion));
-        } else {
-            throw new \Exception('Uploaded file has error: ' . $uploadedFile->getError());
+        if ($uploadedFile !== null && $uploadedFile->getSize() >= 1) { // on update the uploaded file may be null ...
+            var_dump($uploadedFile);
+            #exit;
+            if ($uploadedFile->getError() === UPLOAD_ERR_OK) {
+                $uploadedFile->moveTo($this->getDeviceVersionImagePath($device, $deviceVersion));
+            } else {
+                throw new \Exception('Uploaded file has error: ' . $uploadedFile->getError());
+            }
         }
 
         return $writtenBytes > 0 && fclose($deviceVersionInfoFileHandle);
@@ -75,19 +79,20 @@ class DeviceVersions {
 
     public function update(Device $device, DeviceVersion $currentDeviceVersion, DeviceVersion $newDeviceVersion, UploadedFileInterface $uploadedFile) {
 
-        // @TODO: rename() is not working for not empty directories ... try call system ...
+        var_dump($uploadedFile);
+
         if ($currentDeviceVersion->getVersion() !== $newDeviceVersion->getVersion()) {
 
             $oldPath = str_replace(':', '\:', $this->getDeviceVersionDirectoryPath($device, $currentDeviceVersion));
             $newPath = str_replace(':', '\:', $this->getDeviceVersionDirectoryPath($device, $newDeviceVersion));
 
             $this->logger->addInfo('About to move deviceVersion directory from ' . $oldPath . ' to ' . $newPath);
-            echo 'oldDir: ' . $oldPath . ' newDir: ' . $newPath . '<br>';
+            # echo 'oldDir: ' . $oldPath . ' newDir: ' . $newPath . '<br>';
             $systemResponse = system('mv ' . $oldPath . ' ' . $newPath);
-            var_dump($systemResponse);
+            # var_dump($systemResponse);
         }
 
-        if ($uploadedFile !== null && is_file($this->getDeviceVersionImagePath($device, $newDeviceVersion))) {
+        if ($uploadedFile !== null && $uploadedFile->getSize() >= 1 && is_file($this->getDeviceVersionImagePath($device, $newDeviceVersion))) {
             // if a new binary file is provided, simply delete the old one to be able to move the new one at same location
             if (!unlink($this->getDeviceVersionImagePath($device, $newDeviceVersion))) {
                 // bubble up error
@@ -116,7 +121,13 @@ class DeviceVersions {
 
         if ($version !== null) {
 
-            if (!$this->isValidVersion($version)) {
+            $isValidVersion = $this->isValidVersion($version);
+            if (!$isValidVersion) {
+                echo '$version: ';
+                var_dump($version);
+                echo '$isValidVersion: ';
+                var_dump($isValidVersion);
+                # exit;
                 throw new \Exception('Invalid version given to load!');
             }
 
@@ -140,59 +151,11 @@ class DeviceVersions {
                         $deviceVersion->setValid(true);
                     }
                 }
-
                 $deviceVersion->setExisting(true);
             }
         }
 
         return $deviceVersion;
-    }
-
-    public function validate($formData) {
-
-    	$msgs = array();
-
-        // formData contains valid mac
-        if (empty($formData['mac'])) {
-            $msgs['mac'] = 'Keine Mac-Adresse angegeben!';
-        } else {
-            $devicesRepository = new Devices($this->logger);
-            if (!$devicesRepository->isValidMac($formData['mac'])) {
-                $msgs['mac'] = 'Ungültige Mac-Adresse angegeben!';
-            }
-        }
-        // postData contains valid version
-        if (empty($formData['version'])) {
-            $msgs['version'] = 'Keine Version angegeben!';
-        } else if (!$this->isValidVersion($formData['version'])) {
-            $msgs['version'] = 'Ungültige Version angegeben!';
-        } else if (empty($msgs['mac'])) {
-            $devicesRepository = new Devices($this->logger);
-            $device = $devicesRepository->load($formData['mac']);
-            if ($this->load($device, $formData['version'])->isExisting()) {
-                $msgs['version'] = 'Diese Version existiert bereits!';
-            }
-        }
-        // postData contains any software name
-        if (empty($formData['softwareName'])) {
-            $msgs['softwareName'] = 'Keinen Software-Namen angegeben!';
-        }
-        // postData contains any description
-        if (empty($formData['description'])) {
-            $msgs['description'] = 'Keine Beschreibung angegeben!';
-        }
-        // postData contains a binary image
-        if (
-            !array_key_exists('files', $formData) ||
-            !array_key_exists('file', $formData['files']) ||
-            $formData['files']['file']->getSize() <= 0
-        ) {
-            $msgs['file'] = 'Keine Datei gesendet!';
-        }
-
-        $this->logger->addDebug(__METHOD__ . ' ' . print_r($msgs, true));
-
-        return $msgs;
     }
 
     public function delete(Device $device, DeviceVersion $deviceVersion) {
@@ -226,7 +189,8 @@ class DeviceVersions {
     }
 
     public function isValidVersion($version) {
-        return preg_match('/^[0-9]{1,2}\.[0-9]{1,3}(\.[0-9]{1,3})?$/', $version) === 1;
+        $res = preg_match('/^[0-9]{1,2}\.[0-9]{1,3}(\.[0-9]{1,3})?$/', $version, $matches);
+        return ($res === 1);
     }
 
     public function getDeviceVersionInfoAsJson(DeviceVersion $deviceVersion) {

@@ -117,30 +117,6 @@ class Devices {
         return $device;
     }
 
-    public function validate($formData, $checkExisting = true) {
-
-        $msgs = array();
-
-        // formData contains valid mac
-        if (empty($formData['mac'])) {
-            $msgs['mac'] = 'Keine Mac-Adresse angegeben!';
-        } else if (!$this->isValidMac($formData['mac'])) {
-            $msgs['mac'] = 'Ungültige Mac-Adresse angegeben!';
-        } else if ($checkExisting && $this->load($formData['mac'])->isExisting()) {
-            $msgs['mac'] = 'Device mit dieser Mac-Adresse existiert bereits!';
-        }
-        // postData contains any esp type
-        if (empty($formData['type'])) {
-            $msgs['type'] = 'Keine ESP-Version angegeben!';
-        }
-        // postData contains any info
-        if (empty($formData['info'])) {
-            $msgs['info'] = 'Keine weiteren Informationen zum ESP angegeben!';
-        }
-
-        return $msgs;
-    }
-
     /**
      * @return void
      * @throws \Exception if info file or base-folder do not exist

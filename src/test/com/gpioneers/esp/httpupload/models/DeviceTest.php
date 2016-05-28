@@ -1,15 +1,17 @@
 <?php
 
+namespace com\gpioneers\esp\httpupload\models;
+
 use com\gpioneers\esp\httpupload\models\Device;
 use com\gpioneers\esp\httpupload\models\DeviceVersion;
 
-class DeviceTest extends PHPUnit_Framework_TestCase {
+class DeviceTest extends \PHPUnit_Framework_TestCase {
 
 	private $logger;
 
 	protected function setup() {
-		$loggerHandler = new Monolog\Handler\TestHandler();
-		$this->logger = new Monolog\Logger('testLogger', array($loggerHandler));
+		$loggerHandler = new \Monolog\Handler\TestHandler();
+		$this->logger = new \Monolog\Logger('testLogger', array($loggerHandler));
 	}
 
 	protected function tearDown() {
@@ -37,7 +39,7 @@ class DeviceTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals($deviceVersion1, $device->getVersions()[0]);
 		$this->assertEquals($deviceVersion2, $device->getVersions()[1]);
 		$this->assertEquals($deviceVersion4, $device->getVersions()[2]);
-	
+
 	}
 
 	/**

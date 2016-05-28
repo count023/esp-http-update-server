@@ -13,6 +13,21 @@
 	<dd class="device-detail--info"><p><?php echo $data['device']->getInfo() ?></p></dd>
 </dl>
 
+<?php
+	foreach ($data['device']->getVersions() as $deviceVersion) {
+?>
+<dl class="detail detail__device-version">
+    <di class="detail__device-version--version__header">Version</di>
+    <dd class="detail__device-version--version"><?php echo $deviceVersion->getVersion() ?></dd>
+    <di class="detail__device-version--software-name__header">Software-Name</di>
+    <dd class="detail__device-version--software-name"><?php echo $deviceVersion->getSoftwareName() ?></dd>
+    <di class="detail__device-version--description__header">Beschreibung</di>
+    <dd class="detail__device-version--description"><p><?php echo $deviceVersion->getDescription() ?></p></dd>
+</dl>
+<?php
+	}
+?>
+
 <ul class="page-navigation">
 	<li><form action="/admin/device/<?php echo $data['device']->getMac(); ?>/delete" method="post"><button type="submit">Löschen</button></form></li>
 	<li><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/edit">Ändern</a></li>

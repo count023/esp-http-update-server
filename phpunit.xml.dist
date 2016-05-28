@@ -14,6 +14,7 @@
     <testsuites>
         <testsuite name="Models Tests">
             <directory>src/test/com/gpioneers/esp/httpupload/models</directory>
+            <directory>src/test/com/gpioneers/esp/httpupload/controllers</directory>
         </testsuite>
     </testsuites>
 

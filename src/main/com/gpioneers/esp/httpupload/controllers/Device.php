@@ -54,9 +54,10 @@ class Device {
         $msgs = array();
 
         if (empty($args['staMac'])) { // new
-            $device = $this->repository->load(null, $this->ci->logger);
 
-            // check if it is a redirect from read with anknown mac-address
+            $device = $this->repository->load(null);
+
+            // check if it is a redirect from read with unknown mac-address
             $queryParameter = $request->getQueryParams();
             $staMac = array_key_exists('staMac', $queryParameter) ? $queryParameter['staMac'] : '';
             if (!empty($staMac)) {
@@ -64,7 +65,8 @@ class Device {
                 $device->setMac($staMac);
             }
         } else { // edit
-            $device = $this->repository->load($args['staMac'], $this->ci->logger);
+
+            $device = $this->repository->load($args['staMac']);
         }
 
         return $this->ci->renderer->render(
@@ -92,11 +94,11 @@ class Device {
         $formData = $request->getParsedBody();
 
         // validate &
-        $msgs = $this->repository->validate($formData);
+        $msgs = $this->validate($formData);
 
         if (!empty($msgs)) {
 
-            $device = $this->repository->load(null, $this->ci->logger);
+            $device = $this->repository->load(null);
             $device->setMac($formData['mac']);
             $device->setType($formData['type']);
             $device->setInfo($formData['info']);
@@ -113,17 +115,16 @@ class Device {
 
         } else {
 
-            $device = $this->repository->load($formData['mac'], $this->ci->logger);
+            $device = $this->repository->load($formData['mac']);
             $device->setType($formData['type']);
             $device->setInfo($formData['info']);
             $success = $this->repository->save($device);
 
-            // redirect to device page and show sucess message
+            // redirect to device page and show success message
             return $this->ci->renderer->render(
                 $response,
                 'admin/device/detail.phtml',
                 array_merge([
-                    'staMac' => $formData['mac'],
                     'msg' => ($success ? 'Sucessfully created' : 'Creation failed'),
                     'defaults' => $defaults,
                     'device' => $device
@@ -138,11 +139,10 @@ class Device {
 
         $device = null;
         try {
-            $device = $this->repository->load($args['staMac'], $this->ci->logger);
+            $device = $this->repository->load($args['staMac']);
         } catch (Exception $e) {
-            $device = $this->repository->load(null, $this->ci->logger);
+            $device = $this->repository->load(null);
             $device->setMac($args['staMac']);
-            $args['device'] = $device;
         }
 
         if ($device->isExisting()) {
@@ -165,8 +165,6 @@ class Device {
 
     /**
      * POST /admin/device/{STA-Mac}/edit
-     *
-     * @TODO: if mac changes on update, check for not overwriteing already existing one!
      */
     public function update(Request $request, Response $response, $args) {
 
@@ -177,7 +175,7 @@ class Device {
         $formData = $request->getParsedBody();
 
         // validate
-        $msgs = $this->repository->validate($formData, false);
+        $msgs = $this->validate($formData, true);
         if (!empty($msgs)) {
 
             $currentDevice = $this->repository->load($formData['staMac']);
@@ -192,8 +190,6 @@ class Device {
             $newDevice->setInfo($formData['info']);
 
             if ($currentDevice->getMac() !== $newDevice->getMac() && $newDevice->isExisting()) {
-
-                $msgs['mac'] = 'You tried to change the mac-address of the device, but the new mac-address already exists!';
                 // resetting the mac-address to the old valid one!
                 $newDevice->setMac($currentDevice->getMac());
             }
@@ -216,28 +212,8 @@ class Device {
             $newDevice->setType($formData['type']);
             $newDevice->setInfo($formData['info']);
 
-            if ($currentDevice->getMac() !== $newDevice->getMac() && $newDevice->isExisting()) {
-
-                $msgs['mac'] = 'You tried to change the mac-address of the device, but the new mac-address already exists!';
-                // resetting the mac-address to the old valid one!
-                $newDevice->setMac($currentDevice->getMac());
-
-                return $this->ci->renderer->render(
-                    $response,
-                    'admin/device/form.phtml',
-                    array_merge([
-                        'defaults' => $defaults,
-                        'device' => $newDevice,
-                        'msgs' => $msgs,
-                        'formData' => $formData
-                    ], $args)
-                );
-
-            } else {
-
-                $success = $this->repository->update($currentDevice, $newDevice);
-                return $response->withStatus(302)->withHeader('Location', '/admin/device/' . $formData['mac'] . '?msg=' . ($success ? 'Sucessfully updated' : 'Updating failed'));
-            }
+            $success = $this->repository->update($currentDevice, $newDevice);
+            return $response->withStatus(302)->withHeader('Location', '/admin/device/' . $newDevice->getMac() . '?msg=' . ($success ? 'Sucessfully updated' : 'Updating failed'));
         }
     }
 
@@ -271,5 +247,34 @@ class Device {
         // else: send 404
         $this->ci->logger->addWarning('Request to delete not existing device with mac ' . $args['staMac'] . ' by authorzed user named: \'' . $userName . '\'');
         return $response->withStatus(404)->withHeader('Location', '/admin/devices?msg=' . 'Trial to delete unknown device ' . $device->getMac());
+    }
+
+    private function validate($formData, $isUpdate = false) {
+
+        $msgs = array();
+
+        // formData contains valid mac
+        if (empty($formData['mac'])) {
+            $msgs['mac'] = 'Keine Mac-Adresse angegeben!';
+        } else if (!$this->repository->isValidMac($formData['mac'])) {
+            $msgs['mac'] = 'Ungültige Mac-Adresse angegeben!';
+        } else {
+            $newDevice = $this->repository->load($formData['mac']);
+            if (!$isUpdate && $newDevice->isExisting()) {
+                $msgs['mac'] = 'Device mit dieser Mac-Adresse existiert bereits!';
+            } else if ($isUpdate && $formData['mac'] !== $formData['staMac'] && $newDevice->isExisting()) {
+                $msgs['mac'] = 'You tried to change the mac-address of the device to "' . $formData['mac'] . '", but this mac-address already exists!';
+            }
+        }
+        // postData contains any esp type
+        if (empty($formData['type'])) {
+            $msgs['type'] = 'Keine ESP-Version angegeben!';
+        }
+        // postData contains any info
+        if (empty($formData['info'])) {
+            $msgs['info'] = 'Keine weiteren Informationen zum ESP angegeben!';
+        }
+
+        return $msgs;
     }
 }
