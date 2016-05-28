@@ -108,6 +108,7 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
         $deviceVersion->setDescription('description');
         $uploadedFileMock = $this->getMockBuilder('\Slim\Http\UploadedFile')->disableOriginalConstructor()->getMock();
         $uploadedFileMock->expects($this->once())->method('getError')->willReturn(UPLOAD_ERR_OK);
+        $uploadedFileMock->expects($this->exactly(1))->method('getSize')->willReturn(11);
         $uploadedFileMock->expects($this->once())->method('moveTo')->will($this->returnCallback(function () {
             $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.2/image.bin', 'w');
             fwrite($fileHandle, 'binary data');
@@ -147,6 +148,12 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
         $deviceVersion->setDescription('description');
         $uploadedFileMock = $this->getMockBuilder('\Slim\Http\UploadedFile')->disableOriginalConstructor()->getMock();
         $uploadedFileMock->expects($this->exactly(2))->method('getError')->willReturn(UPLOAD_ERR_NO_FILE);
+        $uploadedFileMock->expects($this->exactly(1))->method('getSize')->willReturn(11);
+        $uploadedFileMock->expects($this->never())->method('moveTo')->will($this->returnCallback(function () {
+            $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.2/image.bin', 'w');
+            fwrite($fileHandle, 'binary data');
+            fclose($fileHandle);
+        }));
 
         $success = $deviceVersionsRepository = $deviceVersionsRepository->save($device, $deviceVersion, $uploadedFileMock);
     }
@@ -181,6 +188,7 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
         $newDeviceVersion->setDescription('newDescription');
 
         $uploadedFileMock = $this->getMockBuilder('\Slim\Http\UploadedFile')->disableOriginalConstructor()->getMock();
+        $uploadedFileMock->expects($this->exactly(2))->method('getSize')->willReturn(11);
         $uploadedFileMock->expects($this->once())->method('getError')->willReturn(UPLOAD_ERR_OK);
         $uploadedFileMock->expects($this->once())->method('moveTo')->will($this->returnCallback(function () {
             $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/3.3/image.bin', 'w');

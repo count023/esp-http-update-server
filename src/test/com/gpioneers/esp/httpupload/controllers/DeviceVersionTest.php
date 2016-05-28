@@ -152,7 +152,7 @@ class DeviceVersionTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue(!array_key_exists('version', $msgs));
         $this->assertTrue(!array_key_exists('softwareName', $msgs));
         $this->assertTrue(!array_key_exists('description', $msgs));
-        $this->assertEquals('Keine Datei gesendet!', $msgs['file']);
+        $this->assertTrue(!array_key_exists('file', $msgs));
     }
 
     /**
@@ -185,7 +185,7 @@ class DeviceVersionTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals('You tried to change the version number to "2.3", but this version already exists!', $msgs['version']);
         $this->assertTrue(!array_key_exists('softwareName', $msgs));
         $this->assertTrue(!array_key_exists('description', $msgs));
-        $this->assertEquals('Keine Datei gesendet!', $msgs['file']);
+        $this->assertTrue(!array_key_exists('file', $msgs));
     }
 
     /**

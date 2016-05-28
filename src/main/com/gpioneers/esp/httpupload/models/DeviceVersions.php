@@ -65,8 +65,6 @@ class DeviceVersions {
         $writtenBytes = fwrite($deviceVersionInfoFileHandle, $this->getDeviceVersionInfoAsJson($deviceVersion));
 
         if ($uploadedFile !== null && $uploadedFile->getSize() >= 1) { // on update the uploaded file may be null ...
-            var_dump($uploadedFile);
-            #exit;
             if ($uploadedFile->getError() === UPLOAD_ERR_OK) {
                 $uploadedFile->moveTo($this->getDeviceVersionImagePath($device, $deviceVersion));
             } else {
@@ -78,8 +76,6 @@ class DeviceVersions {
     }
 
     public function update(Device $device, DeviceVersion $currentDeviceVersion, DeviceVersion $newDeviceVersion, UploadedFileInterface $uploadedFile) {
-
-        var_dump($uploadedFile);
 
         if ($currentDeviceVersion->getVersion() !== $newDeviceVersion->getVersion()) {
 
@@ -123,11 +119,6 @@ class DeviceVersions {
 
             $isValidVersion = $this->isValidVersion($version);
             if (!$isValidVersion) {
-                echo '$version: ';
-                var_dump($version);
-                echo '$isValidVersion: ';
-                var_dump($isValidVersion);
-                # exit;
                 throw new \Exception('Invalid version given to load!');
             }
 
