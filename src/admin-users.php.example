@@ -1,10 +1,11 @@
+<?php
 /*
   - rename this file to admin-users.php
   - edit the usernames and passwords
   - !!! never checkin/commit this file to git nor github or any other SCM if latter is not secured and just available to persons you trust! ;)
-  - and - please! - delete the example users - any user given here as full access to anything ;)
+  - and - please! - delete the example users - any user given here has full access to anything ;)
 */
-$authorizedUsers = [
+$authorizedAdminUsers = [
     // userame => password
     "user1"    => "123456",
     "user2"    => "123456"

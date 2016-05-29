@@ -12,6 +12,7 @@
 # ignore composer for MacOsX
 mac-composer
 
-# ignore real password file
+# ignore real password files
 src/admin-users.php
+src/device-users.php
 

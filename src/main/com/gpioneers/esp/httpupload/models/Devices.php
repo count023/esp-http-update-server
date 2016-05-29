@@ -41,16 +41,16 @@ class Devices {
 
     public function save(Device $device) {
         if (!is_dir($this->getDeviceDirectoryPath($device))) {
-        mkdir($this->getDeviceDirectoryPath($device));
-    	}
-    	$deviceInfoFileHandle = fopen($this->getDeviceInfoPath($device), 'w');
+            mkdir($this->getDeviceDirectoryPath($device));
+        }
+        $deviceInfoFileHandle = fopen($this->getDeviceInfoPath($device), 'w');
 
-    	if ($deviceInfoFileHandle === false) {
+        if ($deviceInfoFileHandle === false) {
             // @codeCoverageIgnoreStart
             // not testable; file needs to be changed externaly to come into this state
             throw new \Exception('Can not open deviceInfoFile: ' . $this->getDeviceInfoPath($device));
             // @codeCoverageIgnoreEnd
-    	}
+        }
 
         $writtenBytes = fwrite($deviceInfoFileHandle, $this->getDeviceInfoAsJson($device));
         $success = $writtenBytes > 0 && fclose($deviceInfoFileHandle);

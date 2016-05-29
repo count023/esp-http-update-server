@@ -5,12 +5,19 @@ use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
 require __DIR__ . '/admin-users.php';
+require __DIR__ . '/device-users.php';
 
 $app->add(new \Slim\Middleware\HttpBasicAuthentication([
     "path" => "/admin.*",
     "realm" => "Protected",
     "secure" => false, // allow http instead of https!
-    "users" => $authorizedUsers
+    "users" => $authorizedAdminUsers
+]));
+$app->add(new \Slim\Middleware\HttpBasicAuthentication([
+    "path" => "/device/authenticate/.*",
+    "realm" => "Protected",
+    "secure" => false, // allow http instead of https!
+    "users" => $authorizedDevices
 ]));
 
 
