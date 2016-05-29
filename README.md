@@ -1,5 +1,12 @@
 # A simple php application as counterpart of Esp-HTTP-Update with some security manners
 
+!! Work in Progress !!
+
+## TODOs
+- write custom Authenticator for tuupola/slim-basic-auth: passes for users and devices should be saved encrypted
+- write DeviceAuthRequest: Should validate the request header fields and save a temporary available suth-file
+- write DeviceUpdater: validates the Authentification and provide the highest version available if greater than the current software version of the Device
+
 ## Based on Slim Framework 3 Skeleton Application
 
 Use this skeleton application to quickly setup and start working on a new Slim Framework 3 application. This application uses the latest Slim 3 with the PHP-View template renderer. It also uses the Monolog logger.
