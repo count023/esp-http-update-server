@@ -74,6 +74,7 @@ class DeviceAuthentification {
                 $device = $this->deviceRepository->load($headerValuesStaMac[0]);
                 if ($device->isExisting() && $device->isValid()) {
 
+                    // @TODO: check if $this->repository->load($staMac) can be sufficient ...
                     $deviceAuthentification = new DeviceAuthentificationModel($device, $this->ci->logger);
                     $deviceAuthentification->setApMac($headerValuesApMac[0]);
                     $deviceAuthentification->setChipSize($headerValuesChipSize[0]);
@@ -141,7 +142,7 @@ class DeviceAuthentification {
 
                             if ($highestVersion->getVersion() > $headerValuesVersion[0]) {
                                 $filePath = $this->deviceVersonRepository->getDeviceVersionImagePath($device, $highestVersion);
-                                // send binary image
+                                // send binary image - the old way ... quite short and sweet ;)
                                 header("HTTP/1.1 200 OK");
                                 header("Content-Type: application/octet-stream");
                                 header("Content-Transfer-Encoding: Binary");
