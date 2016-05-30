@@ -24,7 +24,7 @@ class DeviceAuthentifications {
     /**
      * constant time difference between the authentification request and the request to download a new version if available
      */
-    const MAXIMAL_TIME_DIFFERENCE = 5; // 5 seconds
+    const MAXIMAL_TIME_DIFFERENCE = 23; // 23 seconds. Why "23"? Well, it's a marvelous number ;)
 
     public function __construct(LoggerInterface $logger) {
         $this->logger = $logger;
@@ -32,7 +32,11 @@ class DeviceAuthentifications {
     }
 
     /**
+     * @param $staMac mac address (Sta-Mac) of device
+     * @return DeviceAuthentification || null if provided $staMac is not known
+     *
      * @throws \Exception if given $staMac is invlid
+     * @throws \Exception if given $staMac authentificationFile is not accessible
      */
     public function load($staMac) {
 
@@ -65,6 +69,9 @@ class DeviceAuthentifications {
         return null;
     }
 
+    /**
+     * .@param DeviceAuthentification $deviceAuthentification
+     */
     public function save(DeviceAuthentification $deviceAuthentification) {
         $json = $this->getDeviceAuthentificationAsJson($deviceAuthentification);
 
@@ -84,6 +91,8 @@ class DeviceAuthentifications {
     }
 
     /**
+     * @param DeviceAuthentification $deviceAuthentification
+     * @param array $headerInfos
      * @return boolean
      */
     public function authenticate(DeviceAuthentification $deviceAuthentification, $headerInfos) {
@@ -96,6 +105,9 @@ class DeviceAuthentifications {
         );
     }
 
+    /**
+     * @param DeviceAuthentification
+     */
     public function getDeviceAuthentificationAsJson(DeviceAuthentification $deviceAuthentification) {
         return json_encode(
             array(

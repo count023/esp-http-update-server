@@ -38,53 +38,51 @@ class DeviceAuthentification {
     }
 
     /**
-     * reqeusting authenticate with certain header infos about identity
+     * requesting authentification with certain header infos about identity
      *
      * ! This method needs to be accessible only by BasicAuth !
      *
-     * header fields available on httpUpdateRequest from ESP along
-     * https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266httpUpdate/src/ESP8266httpUpdate.cpp#L173
+     * Testable with:
      * <pre><code>
-     *    http.setUserAgent(F("ESP8266-http-Update"));
-     *    http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
-     *    http.addHeader(F("x-ESP8266-AP-MAC"), WiFi.softAPmacAddress());
-     *    http.addHeader(F("x-ESP8266-free-space"), String(ESP.getFreeSketchSpace()));
-     *    http.addHeader(F("x-ESP8266-sketch-size"), String(ESP.getSketchSize()));
-     *    http.addHeader(F("x-ESP8266-chip-size"), String(ESP.getFlashChipRealSize()));
-     *    http.addHeader(F("x-ESP8266-sdk-version"), ESP.getSdkVersion());
-     *    http.addHeader(F("x-ESP8266-mode"), F("sketch"));
-     *    http.addHeader(F("x-ESP8266-version"), currentVersion);
+     * curl
+     *     -vvv
+     *     --user <DEVICE>:<PASSWORD>
+     *     -X POST
+     *     --header "x-ESP8266-STA-MAC: 00:00:00:00:00:00"
+     *     --header "x-ESP8266-AP-MAC: 01:01:01:01:01:01"
+     *     --header "x-ESP8266-chip-size: 8192"
+     *     --header "x-ESP8266-version: 0.0"
+     *     http://localhost:8001/device/authenticate/00:00:00:00:00:00
      * </code></pre>
+     * a file authentification.json should be written to
+     * DATA_DIR . '/00:00:00:00:00:00/authentification.json' with content:
+     * <pre><code>
+     * {"staMac":"00:00:00:00:00:00","apMac":"01:01:01:01:01:01","chipSize":"8192","timestamp":<TIMESTAMP>}
+     * </code></pre>
+     * if a device with mac 00:00:00:00:00:00 already exists ...
+     *
      */
     public function authenticate(Request $request, Response $response, $args) {
 
         // validate
-        $headerValuesStaMac = $request->getHeader('x-ESP8266-STA-MAC');
-        $headerValuesApMac = $request->getHeader('x-ESP8266-AP-MAC');
-        $headerValuesChipSize = $request->getHeader('x-ESP8266-chip-size');
+        $headerValues = $this->getRelevantHeaderValues($request);
+        if ($this->isValidRequest($headerValues, $args)) {
 
-        if (
-            count($headerValuesStaMac) >= 1 &&
-            $headerValuesStaMac[0] === $args['staMac'] && // path of request must contain same STA-MAC!
-            count($headerValuesApMac) >= 1 &&
-            count($headerValuesChipSize) >= 1
-        ) {
             try {
                 // save this authentification info
-                $device = $this->deviceRepository->load($headerValuesStaMac[0]);
+                $device = $this->deviceRepository->load($headerValues['staMac'][0]);
                 if ($device->isExisting() && $device->isValid()) {
 
                     // @TODO: check if $this->repository->load($staMac) can be sufficient ...
                     $deviceAuthentification = new DeviceAuthentificationModel($device, $this->ci->logger);
-                    $deviceAuthentification->setApMac($headerValuesApMac[0]);
-                    $deviceAuthentification->setChipSize($headerValuesChipSize[0]);
+                    $deviceAuthentification->setApMac($headerValues['apMac'][0]);
+                    $deviceAuthentification->setChipSize($headerValues['chipSize'][0]);
                     $deviceAuthentification->setTimestamp(time());
 
                     $this->repository->save($deviceAuthentification);
 
                     // response with Status-Code 200 if the device is known
                     return $response->withStatus(200);
-
                 } else {
                     // send 422 Unprocessable Entity
                     return $response->withStatus(422, 'Unprocessable Entity');
@@ -98,49 +96,56 @@ class DeviceAuthentification {
             return $response->withStatus(420, 'Policy Not Fulfilled');
         }
 
-        // send 404 Not Found in case nothing is working ;) (Should not been reached in any case ... )
+        // send 404 Not Found in case nothing is working ;) (Should never be reached in any case ... )
         return $response->withStatus(404);
     }
 
+    /**
+    * handling request by ESP8266httpUpdate library
+    *
+    * _!NO!_ BasicAuth here!
+    *
+    * header fields available on httpUpdateRequest from ESP along
+    * https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266httpUpdate/src/ESP8266httpUpdate.cpp#L173
+    * <pre><code>
+    *    http.setUserAgent(F("ESP8266-http-Update"));
+    *    http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
+    *    http.addHeader(F("x-ESP8266-AP-MAC"), WiFi.softAPmacAddress());
+    *    http.addHeader(F("x-ESP8266-free-space"), String(ESP.getFreeSketchSpace()));
+    *    http.addHeader(F("x-ESP8266-sketch-size"), String(ESP.getSketchSize()));
+    *    http.addHeader(F("x-ESP8266-chip-size"), String(ESP.getFlashChipRealSize()));
+    *    http.addHeader(F("x-ESP8266-sdk-version"), ESP.getSdkVersion());
+    *    http.addHeader(F("x-ESP8266-mode"), F("sketch"));
+    *    http.addHeader(F("x-ESP8266-version"), currentVersion);
+    * </code></pre>
+    */
     public function download(Request $request, Response $response, $args) {
 
-        $headerValuesStaMac = $request->getHeader('x-ESP8266-STA-MAC');
-        $headerValuesApMac = $request->getHeader('x-ESP8266-AP-MAC');
-        $headerValuesChipSize = $request->getHeader('x-ESP8266-chip-size');
-        $headerValuesVersion = $request->getHeader('x-ESP8266-version');
+        $headerValues = $this->getRelevantHeaderValues($request);
 
-        if (
-            count($headerValuesStaMac) >= 1 &&
-            $headerValuesStaMac[0] === $args['staMac'] && // path of request must contain same STA-MAC!
-            count($headerValuesApMac) >= 1 &&
-            count($headerValuesChipSize) >= 1 &&
-            count($headerValuesVersion) >= 1
-        ) {
+        if ($this->isValidRequest($headerValues, $args)) {
             try {
                 // save this authentification info
-                $device = $this->deviceRepository->load($headerValuesStaMac[0]);
+                $device = $this->deviceRepository->load($headerValues['staMac'][0]);
                 if ($device->isExisting() && $device->isValid()) {
-                    $deviceAuthentification = $this->repository->load($headerValuesStaMac[0]);
+
+                    $deviceAuthentification = $this->repository->load($headerValues['staMac'][0]);
                     if ($deviceAuthentification !== null) {
+
                         // check timestamp aso...
                         if (
                             $this->repository->authenticate(
                                 $deviceAuthentification,
                                 array(
-                                    'staMac' => $headerValuesStaMac[0],
-                                    'apMac' => $headerValuesApMac[0],
-                                    'chipSize' => $headerValuesChipSize[0]
+                                    'staMac' => $headerValues['staMac'][0],
+                                    'apMac' => $headerValues['apMac'][0],
+                                    'chipSize' => $headerValues['chipSize'][0]
                                 )
                             )
                         ) {
                             // check version
-                            $versions = $device->getVersions();
-                            usort($versions, function ($deviceVersionA, $deviceVersionB) {
-                                return strcmp($deviceVersionA->getVersion(), $deviceVersionB->getVersion());
-                            });
-                            $highestVersion = array_pop(array_values($versions));
-
-                            if ($highestVersion->getVersion() > $headerValuesVersion[0]) {
+                            $highestVersion = $this->getHighestVersion($device);
+                            if ($highestVersion->getVersion() > $headerValues['version'][0]) {
                                 $filePath = $this->deviceVersonRepository->getDeviceVersionImagePath($device, $highestVersion);
                                 // send binary image - the old way ... quite short and sweet ;)
                                 header("HTTP/1.1 200 OK");
@@ -150,27 +155,53 @@ class DeviceAuthentification {
                                 readfile($filePath);
                                 exit;
                             } else {
-                              // send 304 Not Modified
-                              return $response->withStatus(304);
+                                // send 304 Not Modified
+                                return $response->withStatus(304);
                             }
-
-                        } else {
-                            // send 401 Not Authorized
-                            return $response->withStatus(401);
-                        }
-                    } else {
-                        // send 401 Not Authorized
-                        return $response->withStatus(401);
+                        } // else would be 401 Not Authorized ... see below
                     }
-                } else {
-                    // send 404 Not Found
-                    return $response->withStatus(404);
+                    // send 401 Not Authorized
+                    return $response->withStatus(401);
                 }
             } catch (\Exception $ex) { // schematically invalid mac-address
                 // send 400 Bad Request
                 return $response->withStatus(400);
             }
         }
+        // send 404 Not Found
+        return $response->withStatus(404);
+    }
+
+    private function getRelevantHeaderValues(Request$request) {
+        $headerValues = array();
+        $headerValues['staMac'] = $request->getHeader('x-ESP8266-STA-MAC');
+        $headerValues['apMac'] = $request->getHeader('x-ESP8266-AP-MAC');
+        $headerValues['chipSize'] = $request->getHeader('x-ESP8266-chip-size');
+        $headerValues['version'] = $request->getHeader('x-ESP8266-version');
+
+        return $headerValues;
+    }
+
+    private function isValidRequest($headerValues, $args) {
+        return (
+            count($headerValues['staMac']) >= 1 &&
+            $headerValues['staMac'][0] === $args['staMac'] && // path of request must contain same STA-MAC!
+            count($headerValues['apMac']) >= 1 &&
+            count($headerValues['chipSize']) >= 1 &&
+            count($headerValues['version']) >= 1
+        );
+    }
+
+    /**
+     * @param Device $device
+     */
+    private function getHighestVersion(Device $device) {
+        $versions = $device->getVersions();
+        usort($versions, function ($deviceVersionA, $deviceVersionB) {
+            return strcmp($deviceVersionA->getVersion(), $deviceVersionB->getVersion());
+        });
+        $highestVersion = array_pop(array_values($versions));
+        return $highestVersion;
     }
 
 }
