@@ -199,8 +199,9 @@ class DeviceAuthentification {
     }
 
     /**
-     * @param $headerValues array of request header fields
-     * @param $args array framework request arguments as provided bei slim 3
+     * @param array $headerValues  of request header fields
+     * @param array $args framework request arguments as provided bei slim 3
+     * @return bool
      */
     private function isValidRequest($headerValues, $args) {
         return (

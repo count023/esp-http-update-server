@@ -67,7 +67,7 @@ class Device {
      * @param Response $response
      * @param array $args as provided by slim 3
      * @return Response
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidMacException
      */
     public function showForm(Request $request, Response $response, $args) {
 
@@ -111,7 +111,8 @@ class Device {
      * @param Response $response
      * @param array $args as provided by slim 3
      * @return Response
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceInfoFileUnwritableException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidMacException
      */
     public function create(Request $request, Response $response, $args) {
 
@@ -169,7 +170,7 @@ class Device {
      * @param Response $response
      * @param array $args as provided by slim 3
      * @return Response
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidMacException
      */
     public function read(Request $request, Response $response, $args) {
 
@@ -204,7 +205,7 @@ class Device {
      * @param Response $response
      * @param array $args as provided by slim 3
      * @return Response
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidMacException
      */
     public function update(Request $request, Response $response, $args) {
 
@@ -265,7 +266,7 @@ class Device {
      * @param Response $response
      * @param array $args as provided by slim 3
      * @return Response
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidMacException
      */
     public function delete(Request $request, Response $response, $args) {
 
@@ -301,7 +302,7 @@ class Device {
      * @param array $formData
      * @param bool $isUpdate
      * @return array validation messages, keys in analogy to the expected form-data keys
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidMacException
      */
     private function validate($formData, $isUpdate = false) {
 

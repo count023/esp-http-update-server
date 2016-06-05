@@ -5,6 +5,18 @@ namespace com\gpioneers\esp\httpupload\models;
 use Psr\Log\LoggerInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
+use com\gpioneers\esp\httpupload\exceptions\DeviceNotExistsException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceInvalidException;
+use com\gpioneers\esp\httpupload\exceptions\UploadedFileErrorException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceVersionInfoFileUnwritableException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceVersionImageFileDeletionException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceVersionInfoFileDeletionException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceVersionDirectoryDeletionException;
+use com\gpioneers\esp\httpupload\exceptions\InvalidVersionException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceNotPersistedException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceVersionNotPersistedException;
+
+
 class DeviceVersions {
 
     /**
@@ -31,8 +43,10 @@ class DeviceVersions {
 
     /**
      * @param Device $device
-     * @return array
-     * @throws \Exception
+     * @return array DeviceVersion[]
+     * @throws DeviceInvalidException
+     * @throws DeviceNotExistsException
+     * @throws InvalidVersionException
      */
     public function getAll(Device $device) {
 
@@ -64,7 +78,10 @@ class DeviceVersions {
      * @param DeviceVersion $deviceVersion
      * @param UploadedFileInterface $uploadedFile
      * @return bool
-     * @throws \Exception
+     * @throws DeviceNotPersistedException
+     * @throws DeviceVersionInfoFileUnwritableException
+     * @throws DeviceVersionNotPersistedException
+     * @throws UploadedFileErrorException
      */
     public function save(Device $device, DeviceVersion $deviceVersion, UploadedFileInterface $uploadedFile) {
 
@@ -76,7 +93,7 @@ class DeviceVersions {
         if ($deviceVersionInfoFileHandle === false) {
             // @codeCoverageIgnoreStart
             // not testable; file needs to be changed externaly to come into this state
-            throw new \Exception('Can not open deviceVersionInfoFile: ' . $this->getDeviceVersionInfoPath($device, $deviceVersion));
+            throw new DeviceVersionInfoFileUnwritableException('Can not open deviceVersionInfoFile: ' . $this->getDeviceVersionInfoPath($device, $deviceVersion));
             // @codeCoverageIgnoreEnd
 
         }
@@ -86,7 +103,7 @@ class DeviceVersions {
             if ($uploadedFile->getError() === UPLOAD_ERR_OK) {
                 $uploadedFile->moveTo($this->getDeviceVersionImagePath($device, $deviceVersion));
             } else {
-                throw new \Exception('Uploaded file has error: ' . $uploadedFile->getError());
+                throw new UploadedFileErrorException('Uploaded file has error: ' . $uploadedFile->getError());
             }
         }
 
@@ -99,7 +116,11 @@ class DeviceVersions {
      * @param DeviceVersion $newDeviceVersion
      * @param UploadedFileInterface $uploadedFile
      * @return bool
-     * @throws \Exception
+     * @throws DeviceNotPersistedException
+     * @throws DeviceVersionImageFileDeletionException
+     * @throws DeviceVersionInfoFileUnwritableException
+     * @throws DeviceVersionNotPersistedException
+     * @throws UploadedFileErrorException
      *
      * @TODO: in case moving the version directory check wether the target already exists!
      */
@@ -111,9 +132,8 @@ class DeviceVersions {
             $newPath = str_replace(':', '\:', $this->getDeviceVersionDirectoryPath($device, $newDeviceVersion));
 
             $this->logger->addInfo('About to move deviceVersion directory from ' . $oldPath . ' to ' . $newPath);
-            # echo 'oldDir: ' . $oldPath . ' newDir: ' . $newPath . '<br>';
             $systemResponse = system('mv ' . $oldPath . ' ' . $newPath);
-            # var_dump($systemResponse);
+            $this->logger->addDebug('Moved deviceVersion directory from ' . $oldPath . ' to ' . $newPath . 'with systemResponse: ' . $systemResponse);
         }
 
         if ($uploadedFile !== null && $uploadedFile->getSize() >= 1 && is_file($this->getDeviceVersionImagePath($device, $newDeviceVersion))) {
@@ -122,7 +142,7 @@ class DeviceVersions {
                 // bubble up error
                 // @codeCoverageIgnoreStart
                 // not testable; file needs to be changed externaly to get into this state
-                throw new \Exception('Failed deleting image-file of version ' . $newDeviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
+                throw new DeviceVersionImageFileDeletionException('Failed deleting image-file of version ' . $newDeviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
                 // @codeCoverageIgnoreEnd
             }
         }
@@ -134,12 +154,19 @@ class DeviceVersions {
      * @param Device $device
      * @param string $version
      * @return DeviceVersion
-     * @throws \Exception
+     * @throws DeviceInvalidException
+     * @throws DeviceNotExistsException
+     * @throws DeviceNotPersistedException
+     * @throws DeviceVersionNotPersistedException
+     * @throws InvalidVersionException
      */
     public function load(Device $device, $version) {
         
-        if (!$device->isExisting() || !$device->isValid()) {
-            throw new \Exception('Invalid device given to load! (isExisting: ' . ($device->isExisting() ? 'true' : 'false') . ' isValid: ' . ($device->isValid() ? 'true' : 'false') . ')');
+        if (!$device->isExisting()) {
+            throw new DeviceNotExistsException('Invalid device given to load!');
+        }
+        if (!$device->isValid()) {
+            throw new DeviceInvalidException('Invalid device given to load!');
         }
 
         $deviceVersion = new DeviceVersion($version, $this->logger);
@@ -148,7 +175,7 @@ class DeviceVersions {
 
             $isValidVersion = $this->isValidVersion($version);
             if (!$isValidVersion) {
-                throw new \Exception('Invalid version given to load!');
+                throw new InvalidVersionException('Invalid version given to load!');
             }
 
             // populate the deviceVersion...
@@ -181,7 +208,12 @@ class DeviceVersions {
     /**
      * @param Device $device
      * @param DeviceVersion $deviceVersion
-     * @throws \Exception
+     * @return void
+     * @throws DeviceNotPersistedException
+     * @throws DeviceVersionDirectoryDeletionException
+     * @throws DeviceVersionImageFileDeletionException
+     * @throws DeviceVersionInfoFileDeletionException
+     * @throws DeviceVersionNotPersistedException
      */
     public function delete(Device $device, DeviceVersion $deviceVersion) {
 
@@ -200,16 +232,16 @@ class DeviceVersions {
                 // not testable; file needs to be changed externaly to come into this state
                 else {
                     // bubble up error
-                    throw new \Exception('Failed deleting directory of version ' . $deviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
+                    throw new DeviceVersionDirectoryDeletionException('Failed deleting directory of version ' . $deviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
                 }
                 // @codeCoverageIgnoreEnd
             } else {
                 // bubble up error
-                throw new \Exception('Failed deleting image-file of version ' . $deviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
+                throw new DeviceVersionImageFileDeletionException('Failed deleting image-file of version ' . $deviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
             }
         } else {
             // bubble up error
-            throw new \Exception('Failed deleting info-file of version ' . $deviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
+            throw new DeviceVersionInfoFileDeletionException('Failed deleting info-file of version ' . $deviceVersion->getVersion() . ' of device with mac: ' . $device->getMac());
         }
     }
 
@@ -237,13 +269,10 @@ class DeviceVersions {
      * @param Device $device
      * @param DeviceVersion $deviceVersion
      * @return string
-     * @throws \Exception
+     * @throws DeviceNotPersistedException
+     * @throws DeviceVersionNotPersistedException
      */
     public function getDeviceVersionInfoPath(Device $device, DeviceVersion $deviceVersion) {
-        if (empty($deviceVersion->getVersion())) {
-            $this->logger->addError('Access to empty $version of ' . get_class($deviceVersion) . '. Probably using not fully initialized ' . get_class($deviceVersion) . '?');
-            throw new \Exception('Access to empty $version of ' . get_class($deviceVersion) . '. Probably using not fully initialized ' . get_class($deviceVersion) . '?');
-        }
         return $this->getDeviceVersionDirectoryPath($device, $deviceVersion) . $this->infoFileName;
     }
 
@@ -251,13 +280,10 @@ class DeviceVersions {
      * @param Device $device
      * @param DeviceVersion $deviceVersion
      * @return string
-     * @throws \Exception
+     * @throws DeviceNotPersistedException
+     * @throws DeviceVersionNotPersistedException
      */
     public function getDeviceVersionImagePath(Device $device, DeviceVersion $deviceVersion) {
-        if (empty($deviceVersion->getVersion())) {
-            $this->logger->addError('Access to empty $version of ' . get_class($deviceVersion) . '. Probably using not fully initialized ' . get_class($deviceVersion) . '?');
-            throw new \Exception('Access to empty $version of ' . get_class($deviceVersion) . '. Probably using not fully initialized ' . get_class($deviceVersion) . '?');
-        }
         return $this->getDeviceVersionDirectoryPath($device, $deviceVersion) . $this->imageFileName;
     }
 
@@ -265,8 +291,18 @@ class DeviceVersions {
      * @param Device $device
      * @param DeviceVersion $deviceVersion
      * @return string
+     * @throws DeviceNotPersistedException
+     * @throws DeviceVersionNotPersistedException
      */
     public function getDeviceVersionDirectoryPath(Device $device, DeviceVersion $deviceVersion) {
+        if (empty($device->getMac())) {
+            $this->logger->addError('Access to empty $mac of ' . get_class($device) . '. Probably using not fully initialized ' . get_class($device) . '?');
+            throw new DeviceNotPersistedException('Access to empty $mac of ' . get_class($device) . '. Probably using not fully initialized ' . get_class($device) . '?');
+        }
+        if (empty($deviceVersion->getVersion())) {
+            $this->logger->addError('Access to empty $version of ' . get_class($deviceVersion) . '. Probably using not fully initialized ' . get_class($deviceVersion) . '?');
+            throw new DeviceVersionNotPersistedException('Access to empty $version of ' . get_class($deviceVersion) . '. Probably using not fully initialized ' . get_class($deviceVersion) . '?');
+        }
         return $this->getDeviceDirectoryPath($device) . $deviceVersion->getVersion() . DIRECTORY_SEPARATOR;
     }
 

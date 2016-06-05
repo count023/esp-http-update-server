@@ -3,6 +3,9 @@
 namespace com\gpioneers\esp\httpupload\models;
 
 use Psr\Log\LoggerInterface;
+use com\gpioneers\esp\httpupload\exceptions\DeviceAuthentificationFileUnreadableException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceAuthentificationFileUnwritableException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceAuthentificationFileDeletionException;
 
 class DeviceAuthentifications {
 
@@ -41,8 +44,7 @@ class DeviceAuthentifications {
     /**
      * @param Device $device
      * @return DeviceAuthentification|null if provided $staMac is not known
-     * @throws \Exception if given $staMac is invlid
-     * @throws \Exception if given $staMac authentificationFile is not accessible
+     * @throws DeviceAuthentificationFileUnreadableException
      */
     public function load(Device $device) {
 
@@ -52,7 +54,7 @@ class DeviceAuthentifications {
             if ($deviceAuthentificationFileHandle === false) {
                 // @codeCoverageIgnoreStart
                 // not testable; file needs to be changed externaly to come into this state
-                throw new \Exception('Can not open deviceAuthentificationFile: ' . $this->getDeviceAuthentificationPath($device));
+                throw new DeviceAuthentificationFileUnreadableException('Can not open deviceAuthentificationFile: ' . $this->getDeviceAuthentificationPath($device));
                 // @codeCoverageIgnoreEnd
             }
 
@@ -77,7 +79,7 @@ class DeviceAuthentifications {
     /**
      * @param DeviceAuthentification $deviceAuthentification
      * @return bool
-     * @throws \Exception
+     * @throws DeviceAuthentificationFileUnwritableException
      */
     public function save(DeviceAuthentification $deviceAuthentification) {
         $json = $this->getDeviceAuthentificationAsJson($deviceAuthentification);
@@ -87,7 +89,7 @@ class DeviceAuthentifications {
         if ($deviceAuthentificationFileHandle === false) {
             // @codeCoverageIgnoreStart
             // not testable; file needs to be changed externaly to come into this state
-            throw new \Exception('Can not open deviceAuthentificationFile: ' . $this->getDeviceAuthentificationPath($deviceAuthentification->getDevice()));
+            throw new DeviceAuthentificationFileUnwritableException('Can not open deviceAuthentificationFile: ' . $this->getDeviceAuthentificationPath($deviceAuthentification->getDevice()));
             // @codeCoverageIgnoreEnd
         }
 
@@ -99,7 +101,7 @@ class DeviceAuthentifications {
 
     /**
      * @param DeviceAuthentification $deviceAuthentification
-     * @throws \Exception
+     * @throws DeviceAuthentificationFileDeletionException
      */
     public function delete(DeviceAuthentification $deviceAuthentification) {
         if (is_file($this->getDeviceAuthentificationPath($deviceAuthentification->getDevice()))) {
@@ -107,7 +109,7 @@ class DeviceAuthentifications {
                 $this->logger->addInfo('Deleted authentification-file of device with mac: ' . $deviceAuthentification->getDevice()->getMac());
           } else {
               // bubble up error
-              throw new \Exception('Failed deleting authentification-file of device with mac: ' . $deviceAuthentification->getDevice()->getMac());
+              throw new DeviceAuthentificationFileDeletionException('Failed deleting authentification-file of device with mac: ' . $deviceAuthentification->getDevice()->getMac());
           }
         }
     }

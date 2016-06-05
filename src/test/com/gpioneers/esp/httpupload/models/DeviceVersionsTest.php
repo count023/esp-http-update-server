@@ -2,10 +2,16 @@
 
 namespace com\gpioneers\esp\httpupload\models;
 
-use com\gpioneers\esp\httpupload\models\Device;
-use com\gpioneers\esp\httpupload\models\Devices;
-use com\gpioneers\esp\httpupload\models\DeviceVersion;
-use com\gpioneers\esp\httpupload\models\DeviceVersions;
+use \com\gpioneers\esp\httpupload\exceptions\DeviceNotExistsException;
+use \com\gpioneers\esp\httpupload\exceptions\DeviceNotPersistedException;
+use \com\gpioneers\esp\httpupload\exceptions\DeviceVersionImageFileDeletionException;
+use \com\gpioneers\esp\httpupload\exceptions\DeviceVersionInfoFileDeletionException;
+use \com\gpioneers\esp\httpupload\exceptions\InvalidVersionException;
+use \com\gpioneers\esp\httpupload\exceptions\UploadedFileErrorException;
+use \com\gpioneers\esp\httpupload\models\Device;
+use \com\gpioneers\esp\httpupload\models\Devices;
+use \com\gpioneers\esp\httpupload\models\DeviceVersion;
+use \com\gpioneers\esp\httpupload\models\DeviceVersions;
 
 
 class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
@@ -129,7 +135,7 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @test
-     * @expectedException Exception
+     * @expectedException \com\gpioneers\esp\httpupload\exceptions\UploadedFileErrorException
      * @expectedExceptionMessage Uploaded file has error: 4
      */
     public function saveUploadFileError() {
@@ -242,8 +248,8 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @test
-     * @expectedException Exception
-     * @expectedExceptionMessage Invalid device given to load! (isExisting: false isValid: false)
+     * @expectedException \com\gpioneers\esp\httpupload\exceptions\DeviceNotExistsException
+     * @expectedExceptionMessage Invalid device given to load!
      */
     public function loadInvalidDevice() {
 
@@ -258,7 +264,7 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @test
-     * @expectedException Exception
+     * @expectedException \com\gpioneers\esp\httpupload\exceptions\InvalidVersionException
      * @expectedExceptionMessage Invalid version given to load!
      */
     public function loadInvalidVersion() {
@@ -378,7 +384,7 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @test
-     * @expectedException Exception
+     * @expectedException \com\gpioneers\esp\httpupload\exceptions\DeviceVersionInfoFileDeletionException
      * @expectedExceptionMessage Failed deleting info-file of version 11.11 of device with mac: BB:BB:BB:BB:BB:BB
      */
     public function deleteNoInfoFile() {
@@ -401,7 +407,7 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @test
-     * @expectedException Exception
+     * @expectedException \com\gpioneers\esp\httpupload\exceptions\DeviceVersionImageFileDeletionException
      * @expectedExceptionMessage Failed deleting image-file of version 12.12 of device with mac: CC:CC:CC:CC:CC:CC
      */
     public function deleteNoImageFile() {
@@ -424,7 +430,7 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @test
-     * @expectedException Exception
+     * @expectedException \com\gpioneers\esp\httpupload\exceptions\DeviceVersionInfoFileDeletionException
      * @expectedExceptionMessage Failed deleting info-file of version 13.13 of device with mac: DD:DD:DD:DD:DD:DD
      */
     public function deleteNoVersionDirectory() {
@@ -468,8 +474,8 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @test
-     * @expectedException Exception
-     * @expectedExceptionMessage Access to empty $version of com\gpioneers\esp\httpupload\models\DeviceVersion. Probably using not fully initialized com\gpioneers\esp\httpupload\models\DeviceVersion?
+     * @expectedException \com\gpioneers\esp\httpupload\exceptions\DeviceNotPersistedException
+     * @expectedExceptionMessage Access to empty $mac of com\gpioneers\esp\httpupload\models\Device. Probably using not fully initialized com\gpioneers\esp\httpupload\models\Device?
      */
     public function getDeviceVersionInfoPath() {
         $device = new Device('', $this->logger);
@@ -485,7 +491,7 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
         }
 
         $this->assertEquals(
-            'Access to empty $version of ' . get_class($deviceVersion) . '. Probably using not fully initialized ' . get_class($deviceVersion) . '?',
+            'Access to empty $mac of ' . get_class($device) . '. Probably using not fully initialized ' . get_class($device) . '?',
             $this->logger->getHandlers()[0]->getRecords()[0]['message']
         );
         $this->assertEquals(
@@ -498,8 +504,8 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
 
     /**
      * @test
-     * @expectedException Exception
-     * @expectedExceptionMessage Access to empty $version of com\gpioneers\esp\httpupload\models\DeviceVersion. Probably using not fully initialized com\gpioneers\esp\httpupload\models\DeviceVersion?
+     * @expectedException \com\gpioneers\esp\httpupload\exceptions\DeviceNotPersistedException
+     * @expectedExceptionMessage Access to empty $mac of com\gpioneers\esp\httpupload\models\Device. Probably using not fully initialized com\gpioneers\esp\httpupload\models\Device?
      */
     public function getDeviceVersionImagePath() {
         $device = new Device('', $this->logger);
@@ -515,7 +521,7 @@ class DeviceVersionsTest extends \PHPUnit_Framework_TestCase {
         }
 
         $this->assertEquals(
-            'Access to empty $version of ' . get_class($deviceVersion) . '. Probably using not fully initialized ' . get_class($deviceVersion) . '?',
+            'Access to empty $mac of ' . get_class($device) . '. Probably using not fully initialized ' . get_class($device) . '?',
             $this->logger->getHandlers()[0]->getRecords()[0]['message']
         );
         $this->assertEquals(

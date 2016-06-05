@@ -3,6 +3,11 @@
 namespace com\gpioneers\esp\httpupload\models;
 
 use Psr\Log\LoggerInterface;
+use com\gpioneers\esp\httpupload\exceptions\DeviceInfoFileUnwritableException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceInfoFileDeletionException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceDirectoryDeletionException;
+use com\gpioneers\esp\httpupload\exceptions\DeviceNotPersistedException;
+use com\gpioneers\esp\httpupload\exceptions\InvalidMacException;
 
 class Devices {
 
@@ -38,7 +43,7 @@ class Devices {
 
     /**
      * @return array
-     * @throws \Exception
+     * @throws InvalidMacException
      */
     public function getAll() {
 
@@ -62,7 +67,8 @@ class Devices {
     /**
      * @param Device $device
      * @return bool
-     * @throws \Exception
+     * @throws DeviceInfoFileUnwritableException
+     * @throws DeviceNotPersistedException
      */
     public function save(Device $device) {
         if (!is_dir($this->getDeviceDirectoryPath($device))) {
@@ -73,7 +79,7 @@ class Devices {
         if ($deviceInfoFileHandle === false) {
             // @codeCoverageIgnoreStart
             // not testable; file needs to be changed externaly to come into this state
-            throw new \Exception('Can not open deviceInfoFile: ' . $this->getDeviceInfoPath($device));
+            throw new DeviceInfoFileUnwritableException('Can not open deviceInfoFile: ' . $this->getDeviceInfoPath($device));
             // @codeCoverageIgnoreEnd
         }
 
@@ -90,7 +96,7 @@ class Devices {
      * @param Device $currentDevice
      * @param Device $newDevice
      * @return bool
-     * @throws \Exception
+     * @throws DeviceInfoFileUnwritableException
      */
     public function update(Device $currentDevice, Device $newDevice) {
 
@@ -109,7 +115,9 @@ class Devices {
     /**
      * @param $mac
      * @return Device
-     * @throws \Exception
+     * @throws DeviceNotPersistedException
+     * @throws InvalidMacException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceAuthentificationFileUnreadableException
      */
     public function load($mac) {
 
@@ -119,7 +127,7 @@ class Devices {
         if ($mac !== null) {
 
             if (!$this->isValidMac($mac)) {
-                throw new \Exception('Invalid mac given to load!');
+                throw new InvalidMacException('Invalid mac given to load!');
             }
 
             if (is_dir($this->getDeviceDirectoryPath($device))) {
@@ -156,10 +164,15 @@ class Devices {
     /**
      * @param Device $device
      * @return void
-     * @throws \Exception if info file or base-folder do not exist
+     * @throws DeviceDirectoryDeletionException
+     * @throws DeviceInfoFileDeletionException
+     * @throws DeviceNotPersistedException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceAuthentificationFileDeletionException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceVersionDirectoryDeletionException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceVersionImageFileDeletionException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceVersionInfoFileDeletionException
      *
      * Remark: need to call implicit functions `unlink` and `rmdir` with surpressing '@' to throw custom \Exceptions!
-     * @TODO: the thrown \Exception, in case of directory does not exist, is a bit misleading
      */
     public function delete(Device $device) {
 
@@ -179,7 +192,7 @@ class Devices {
 
         } else {
             // bubble up error
-            throw new \Exception('Failed deleting info-file of device with mac: ' . $device->getMac());
+            throw new DeviceInfoFileDeletionException('Failed deleting info-file of device with mac: ' . $device->getMac());
         }
         // rmdir $device->getDirectoryPath()
         if (@rmdir($this->getDeviceDirectoryPath($device))) {
@@ -191,7 +204,7 @@ class Devices {
         // not testable; file needs to be changed externaly to come into this state
         else {
             // bubble up error
-            throw new \Exception('Failed deleting directory of device with mac: ' . $device->getMac());
+            throw new DeviceDirectoryDeletionException('Failed deleting directory of device with mac: ' . $device->getMac());
         }
         // @codeCoverageIgnoreEnd
     }
@@ -217,12 +230,12 @@ class Devices {
     /**
      * @param Device $device
      * @return string
-     * @throws \Exception
+     * @throws DeviceNotPersistedException
      */
     public function getDeviceInfoPath(Device $device) {
         if (empty($device->getMac())) {
             $this->logger->addError('Access to empty $mac of ' . get_class($device) . '. Probably using not fully initialized ' . get_class($device) . '?');
-            throw new \Exception('Access to empty $mac of ' . get_class($device) . '. Probably using not fully initialized ' . get_class($device) . '?');
+            throw new DeviceNotPersistedException('Access to empty $mac of ' . get_class($device) . '. Probably using not fully initialized ' . get_class($device) . '?');
         }
         return $this->getDeviceDirectoryPath($device) . $this->infoFileName;
     }
@@ -237,7 +250,7 @@ class Devices {
 
     /**
      * @param Device $device
-     * @return string
+     * @return DeviceVersion
      */
     public function getHighestVersion(Device $device) {
         $versions = $device->getVersions();

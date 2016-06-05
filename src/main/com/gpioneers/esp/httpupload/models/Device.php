@@ -3,6 +3,7 @@
 namespace com\gpioneers\esp\httpupload\models;
 
 use \Psr\Log\LoggerInterface;
+use \com\gpioneers\esp\httpupload\exceptions\DeviceVersionDuplicateException;
 
 class Device {
 
@@ -122,14 +123,14 @@ class Device {
     /**
      * @param string $version
      * @return DeviceVersion|null
-     * @throws \Exception
+     * @throws DeviceVersionDuplicateException
      */
     public function getVersion($version) {
         $fittingVersions = array_values(array_filter($this->versions, function (DeviceVersion $v) use ($version) {
             return $v->getVersion() === $version;
         }));
         if (count($fittingVersions) > 1) {
-            throw new \Exception('Found more than one fitting version for "' . $version . '"! Something really went totaly wrong!');
+            throw new DeviceVersionDuplicateException('Found more than one fitting version for "' . $version . '"! Something really went totaly wrong!');
         }
         return empty($fittingVersions) ? null : $fittingVersions[0];
     }

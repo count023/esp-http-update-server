@@ -88,11 +88,17 @@ class DeviceVersionTest extends \PHPUnit_Framework_TestCase {
         $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.2/info.json', 'w');
         fwrite($fileHandle, '{"softwareName":"softwareName","description":"description"}');
         fclose($fileHandle);
+        $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.2/image.bin', 'w');
+        fwrite($fileHandle, 'BINARY FILE');
+        fclose($fileHandle);
 
-        $method = new \ReflectionMethod('com\gpioneers\esp\httpupload\controllers\DeviceVersion', 'validate');
+        $devicesRepository = new Devices($this->logger);
+        $device = $devicesRepository->load('22:22:22:22:22:22');
+
+        $method = new \ReflectionMethod('\com\gpioneers\esp\httpupload\controllers\DeviceVersion', 'validate');
         $method->setAccessible(true);
 
-        $msgs = $method->invoke(new DeviceVersion($this->ci), $this->device, array(
+        $msgs = $method->invoke(new DeviceVersion($this->ci), $device, array(
             'version' => '2.2'
         ));
 
@@ -112,11 +118,17 @@ class DeviceVersionTest extends \PHPUnit_Framework_TestCase {
         $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.2/info.json', 'w');
         fwrite($fileHandle, '{"softwareName":"softwareName","description":"description"}');
         fclose($fileHandle);
+        $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.2/image.bin', 'w');
+        fwrite($fileHandle, 'BINARY FILE');
+        fclose($fileHandle);
 
-        $method = new \ReflectionMethod('com\gpioneers\esp\httpupload\controllers\DeviceVersion', 'validate');
+        $devicesRepository = new Devices($this->logger);
+        $device = $devicesRepository->load('22:22:22:22:22:22');
+
+        $method = new \ReflectionMethod('\com\gpioneers\esp\httpupload\controllers\DeviceVersion', 'validate');
         $method->setAccessible(true);
 
-        $msgs = $method->invoke(new DeviceVersion($this->ci), $this->device, array(
+        $msgs = $method->invoke(new DeviceVersion($this->ci), $device, array(
             'version' => '2.2',
             'softwareName' => 'softwareName',
             'description' => 'description'
@@ -138,11 +150,17 @@ class DeviceVersionTest extends \PHPUnit_Framework_TestCase {
         $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.2/info.json', 'w');
         fwrite($fileHandle, '{"softwareName":"softwareName","description":"description"}');
         fclose($fileHandle);
+        $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.2/image.bin', 'w');
+        fwrite($fileHandle, 'BINARY FILE');
+        fclose($fileHandle);
 
-        $method = new \ReflectionMethod('com\gpioneers\esp\httpupload\controllers\DeviceVersion', 'validate');
+        $devicesRepository = new Devices($this->logger);
+        $device = $devicesRepository->load('22:22:22:22:22:22');
+
+        $method = new \ReflectionMethod('\com\gpioneers\esp\httpupload\controllers\DeviceVersion', 'validate');
         $method->setAccessible(true);
 
-        $msgs = $method->invoke(new DeviceVersion($this->ci), $this->device, array(
+        $msgs = $method->invoke(new DeviceVersion($this->ci), $device, array(
             'currentVersion' => '2.2',
             'version' => '2.2',
             'softwareName' => 'softwareName',
@@ -165,17 +183,26 @@ class DeviceVersionTest extends \PHPUnit_Framework_TestCase {
         $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.2/info.json', 'w');
         fwrite($fileHandle, '{"softwareName":"softwareName","description":"description"}');
         fclose($fileHandle);
+        $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.2/image.bin', 'w');
+        fwrite($fileHandle, 'BINARY FILE');
+        fclose($fileHandle);
 
         // create other version-folder with valid content
         mkdir(DATA_DIR . '22:22:22:22:22:22/2.3', 0775);
         $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.3/info.json', 'w');
         fwrite($fileHandle, '{"softwareName":"softwareName","description":"description"}');
         fclose($fileHandle);
+        $fileHandle = fopen(DATA_DIR . '22:22:22:22:22:22/2.3/image.bin', 'w');
+        fwrite($fileHandle, 'BINARY FILE');
+        fclose($fileHandle);
 
-        $method = new \ReflectionMethod('com\gpioneers\esp\httpupload\controllers\DeviceVersion', 'validate');
+        $devicesRepository = new Devices($this->logger);
+        $device = $devicesRepository->load('22:22:22:22:22:22');
+
+        $method = new \ReflectionMethod('\com\gpioneers\esp\httpupload\controllers\DeviceVersion', 'validate');
         $method->setAccessible(true);
 
-        $msgs = $method->invoke(new DeviceVersion($this->ci), $this->device, array(
+        $msgs = $method->invoke(new DeviceVersion($this->ci), $device, array(
             'currentVersion' => '2.2',
             'version' => '2.3',
             'softwareName' => 'softwareName',
@@ -193,7 +220,7 @@ class DeviceVersionTest extends \PHPUnit_Framework_TestCase {
      */
     public function validateValid() {
 
-        $method = new \ReflectionMethod('com\gpioneers\esp\httpupload\controllers\DeviceVersion', 'validate');
+        $method = new \ReflectionMethod('\com\gpioneers\esp\httpupload\controllers\DeviceVersion', 'validate');
         $method->setAccessible(true);
 
         $uploadedFileMock = $this->getMockBuilder('\Slim\Http\UploadedFile')->disableOriginalConstructor()->getMock();

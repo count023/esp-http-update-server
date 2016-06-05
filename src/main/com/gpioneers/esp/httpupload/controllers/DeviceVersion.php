@@ -9,6 +9,7 @@ use \Psr\Http\Message\ResponseInterface as Response;
 use \com\gpioneers\esp\httpupload\models\Devices;
 use \com\gpioneers\esp\httpupload\models\Device as DeviceModel;
 use \com\gpioneers\esp\httpupload\models\DeviceVersions;
+use \com\gpioneers\esp\httpupload\exceptions\DeviceVersionNotExistsException;
 
 class DeviceVersion {
 
@@ -43,7 +44,9 @@ class DeviceVersion {
      * @param Response $response
      * @param array $args as provided by slim 3
      * @return Response
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceInvalidException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceNotExistsException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidVersionException
      */
     public function showForm(Request $request, Response $response, $args) {
 
@@ -97,7 +100,11 @@ class DeviceVersion {
      * @param Response $response
      * @param array $args as provided by slim 3
      * @return Response
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceInvalidException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceNotExistsException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceVersionInfoFileUnwritableException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidVersionException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\UploadedFileErrorException
      */
     public function create(Request $request, Response $response, $args) {
 
@@ -166,7 +173,9 @@ class DeviceVersion {
      * @param Response $response
      * @param array $args as provided by slim 3
      * @return Response
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceInvalidException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceNotExistsException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidVersionException
      */
     public function read(Request $request, Response $response, $args) {
 
@@ -213,7 +222,12 @@ class DeviceVersion {
      * @param Response $response
      * @param array $args as provided by slim 3
      * @return Response
-     * @throws \Exception
+     * @throws DeviceVersionNotExistsException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceInvalidException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceNotExistsException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceVersionDuplicateException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceVersionImageFileDeletionException
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidVersionException
      */
     public function update(Request $request, Response $response, $args) {
 
@@ -234,7 +248,7 @@ class DeviceVersion {
 
                 $currentDeviceVersion = $device->getVersion($formData['currentVersion']); //$this->repository->load($device, $formData['currentVersion']);
                 if ($currentDeviceVersion === null) {
-                    throw new \Exception('Trial to update not existing version! ("' . $formData['currentVersion'] . '")');
+                    throw new DeviceVersionNotExistsException('Trial to update not existing version! ("' . $formData['currentVersion'] . '")');
                 }
                 $newDeviceVersion = null;
                 if (!empty($msgs['version'])) { // empty or invalid version or new version already exists
@@ -292,7 +306,6 @@ class DeviceVersion {
      * @param Response $response
      * @param array $args as provided by slim 3
      * @return Response
-     * @throws \Exception
      */
     public function delete(Request $request, Response $response, $args) {
 
@@ -305,11 +318,18 @@ class DeviceVersion {
           $deviceVersion = null;
           try {
               $deviceVersion = $this->repository->load($device, $args['version']);
+              /*
+               * @throws DeviceInvalidException -> 400 Bad Request
+               * @throws DeviceNotExistsException -> 404
+               * @throws DeviceNotPersistedException ->
+               * @throws DeviceVersionNotPersistedException ->
+               * @throws InvalidVersionException ->
+               */
           } catch (\Exception $e) {
               return $response->withStatus(404)->withHeader('Location', '/admin/devices?msg=' . 'Trial to delete unknown device (' . $device->getMac() . ') version (' . $args['version'] . ')');
           }
 
-          if ($deviceVersion->isExisting()) {
+          if ($deviceVersion !== null && $deviceVersion->isExisting()) {
               try {
                   $this->repository->delete($device, $deviceVersion);
               } catch (\Exception $ex) {
@@ -332,7 +352,7 @@ class DeviceVersion {
     /**
      * @param string $staMac
      * @return \com\gpioneers\esp\httpupload\models\Device|null if device does not exist or given ,mac is invalid
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\InvalidMacException
      */
     private function loadDevice($staMac) {
         $device = null;
@@ -350,7 +370,7 @@ class DeviceVersion {
      * @param array $formData
      * @param bool $isUpdate optional
      * @return array validation messages, keys in analogy to the expected form-data keys
-     * @throws \Exception
+     * @throws \com\gpioneers\esp\httpupload\exceptions\DeviceVersionDuplicateException
      */
     private function validate(DeviceModel $device, $formData, $isUpdate = false) {
 
@@ -362,14 +382,11 @@ class DeviceVersion {
         } else if (!$this->repository->isValidVersion($formData['version'])) {
             $msgs['version'] = 'Ungültige Version angegeben!';
         } else {
-            # $device = $this->parentRepository->load($device->getMac());
             $newDeviceVersion = $device->getVersion($formData['version']); // $this->repository->load($device, $formData['version']);
-            if ($newDeviceVersion !== null) {
-                if (!$isUpdate && $newDeviceVersion->isExisting()) {
-                    $msgs['version'] = 'Diese Version existiert bereits!';
-                } else if ($isUpdate && $formData['version'] !== $formData['currentVersion'] && $newDeviceVersion->isExisting()) {
-                    $msgs['version'] = 'You tried to change the version number to "' . $formData['version'] . '", but this version already exists!';
-                }
+            if (!$isUpdate && $newDeviceVersion !== null && $newDeviceVersion->isExisting()) {
+                $msgs['version'] = 'Diese Version existiert bereits!';
+            } else if ($isUpdate && $formData['version'] !== $formData['currentVersion'] && $newDeviceVersion !== null && $newDeviceVersion->isExisting()) {
+                $msgs['version'] = 'You tried to change the version number to "' . $formData['version'] . '", but this version already exists!';
             }
         }
         // postData contains any software name
