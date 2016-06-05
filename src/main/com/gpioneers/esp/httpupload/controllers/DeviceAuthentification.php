@@ -222,6 +222,7 @@ class DeviceAuthentification {
             count($headerValues['version']) >= 1
         );
         $this->ci->logger->addDebug('DeviceAuthentification::isValidRequest: ' . ($isValidRequest ? 'true' : 'false'));
+        $this->ci->logger->addDebug('DeviceAuthentification::isValidRequest: header[staMac]: ' . $headerValues['staMac'][0] . ' ==? args[staMac]: ' . $args['staMac']);
         return $isValidRequest;
     }
 }
