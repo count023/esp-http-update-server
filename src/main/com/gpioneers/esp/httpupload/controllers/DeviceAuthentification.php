@@ -89,21 +89,25 @@ class DeviceAuthentification {
                     $this->repository->save($deviceAuthentification);
 
                     // response with Status-Code 200 if the device is known
+                    $this->ci->logger->addInfo('DeviceAuthentification::authenticate About to send 200; knowing device with $mac: ' . $headerValues['staMac'][0]);
                     return $response->withStatus(200);
                 } else {
                     // send 422 Unprocessable Entity
+                    $this->ci->logger->addInfo('DeviceAuthentification::authenticate About to send 422; device with $mac: ' . $headerValues['staMac'][0] . ' is not existing or not valid');
                     return $response->withStatus(422, 'Unprocessable Entity');
                 }
             } catch (\Exception $ex) { // schematically invalid mac-address
                 // send 400 Bad Request
+                $this->ci->logger->addInfo('DeviceAuthentification::authenticate About to send 400; requested $mac: ' . $headerValues['staMac'][0]);
                 return $response->withStatus(400);
             }
         } else {
             // send 420 Policy Not Fulfilled
+            $this->ci->logger->addInfo('DeviceAuthentification::authenticate About to send 420; invalid request with $mac: ' . $headerValues['staMac'][0]);
             return $response->withStatus(420, 'Policy Not Fulfilled');
         }
-
         // send 404 Not Found in case nothing is working ;) (Should never be reached in any case ... )
+        $this->ci->logger->addInfo('DeviceAuthentification::authenticate About to send 404; invalid request with $mac: ' . $headerValues['staMac'][0]);
         return $response->withStatus(404);
     }
 
@@ -168,19 +172,23 @@ class DeviceAuthentification {
                                 exit;
                             } else {
                                 // send 304 Not Modified
+                                $this->ci->logger->addInfo('DeviceAuthentification::download About to send 304; requested $mac: ' . $headerValues['staMac'][0] . ' version: ' . $headerValues['version'][0]);
                                 return $response->withStatus(304);
                             }
                         } // else would be 401 Not Authorized ... see below
                     }
                     // send 401 Not Authorized
+                    $this->ci->logger->addInfo('DeviceAuthentification::download About to send 401; requested $mac: ' . $headerValues['staMac'][0]);
                     return $response->withStatus(401);
                 } // else would be 404 Not Found ... see below
             } catch (\Exception $ex) { // schematically invalid mac-address
                 // send 400 Bad Request
+                $this->ci->logger->addInfo('DeviceAuthentification::download About to send 400; requested $mac: ' . $headerValues['staMac'][0]);
                 return $response->withStatus(400);
             }
         }
         // send 404 Not Found
+        $this->ci->logger->addInfo('DeviceAuthentification::download About to send 404; invalid request with $mac: ' . $headerValues['staMac'][0]);
         return $response->withStatus(404);
     }
 
@@ -195,6 +203,7 @@ class DeviceAuthentification {
         $headerValues['chipSize'] = $request->getHeader('x-ESP8266-chip-size');
         $headerValues['version'] = $request->getHeader('x-ESP8266-version');
 
+        $this->ci->logger->addDebug('DeviceAuthentification::getRelevantHeaderValues: ' . (print_r($headerValues, true)));
         return $headerValues;
     }
 
@@ -204,12 +213,15 @@ class DeviceAuthentification {
      * @return bool
      */
     private function isValidRequest($headerValues, $args) {
-        return (
+
+        $isValidRequest = (
             count($headerValues['staMac']) >= 1 &&
             $headerValues['staMac'][0] === $args['staMac'] && // path of request must contain same STA-MAC!
             count($headerValues['apMac']) >= 1 &&
             count($headerValues['chipSize']) >= 1 &&
             count($headerValues['version']) >= 1
         );
+        $this->ci->logger->addDebug('DeviceAuthentification::isValidRequest: ' . ($isValidRequest ? 'true' : 'false'));
+        return $isValidRequest;
     }
 }
