@@ -290,7 +290,6 @@ class DeviceVersion {
      *
      * @param Request $request
      * @param Response $response
-     * @param $args
      * @param array $args as provided by slim 3
      * @return Response
      * @throws \Exception
