@@ -3,9 +3,9 @@
 !! Work in Progress !!
 
 ## TODOs
-- write custom Authenticator for tuupola/slim-basic-auth: passes for users and devices should be saved encrypted
-- write DeviceAuthRequest: Should validate the request header fields and save a temporary available suth-file
-- write DeviceUpdater: validates the Authentification and provide the highest version available if greater than the current software version of the Device
+- ~~write custom Authenticator for tuupola/slim-basic-auth: passes for users and devices should be saved encrypted~~ Done :white_check_mark:
+- ~~write DeviceAuthRequest: Should validate the request header fields and save a temporary available auth-file~~ Done :white_check_mark:
+- ~~write DeviceUpdater: validates the Authentification and provide the highest version available if greater than the current software version of the Device~~ Done :white_check_mark:
 
 ## Based on Slim Framework 3 Skeleton Application
 

@@ -9,16 +9,32 @@ use \com\gpioneers\esp\httpupload\models\Devices;
 
 class Device {
 
+    /**
+     * @var ContainerInterface
+     */
     protected $ci;
+    /**
+     * @var Devices
+     */
     protected $repository;
 
-    // Constructor
+    /**
+     * Device constructor.
+     * @param ContainerInterface $ci
+     */
     public function __construct(ContainerInterface $ci) {
         $this->ci = $ci;
         $this->repository = new Devices($this->ci->logger);
     }
 
-    // GET / admin/devices
+    /**
+     * GET / admin/devices
+     *
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     */
     public function all(Request $request, Response $response, $args) {
 
         $devices = $this->repository->getAll();
@@ -43,8 +59,16 @@ class Device {
         return $response;
     }
 
-    // GET /admin/device/new
-    // GET /admin/device/{STA-Mac}/edit
+    /**
+     * GET /admin/device/new
+     * GET /admin/device/{STA-Mac}/edit
+     *
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     * @throws \Exception
+     */
     public function showForm(Request $request, Response $response, $args) {
 
         $defaults = array(
@@ -83,7 +107,11 @@ class Device {
     /**
      * POST /admin/device/new
      *
-     * @TODO: almost the same as $this->update. Join it!
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     * @throws \Exception
      */
     public function create(Request $request, Response $response, $args) {
 
@@ -93,7 +121,7 @@ class Device {
 
         $formData = $request->getParsedBody();
 
-        // validate &
+        // validate
         $msgs = $this->validate($formData);
 
         if (!empty($msgs)) {
@@ -133,8 +161,16 @@ class Device {
         }
     }
 
-    // GET /admin/device/{STA-Mac}(known)
-    // GET /admin/device/{STA-Mac}(unknown)
+    /**
+     * GET /admin/device/{STA-Mac}(known)
+     * GET /admin/device/{STA-Mac}(unknown)
+     *
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     * @throws \Exception
+     */
     public function read(Request $request, Response $response, $args) {
 
         $device = null;
@@ -145,7 +181,7 @@ class Device {
             $device->setMac($args['staMac']);
         }
 
-        if ($device->isExisting()) {
+        if ($device->isExisting()) { // known
 
             return $this->ci->renderer->render(
                 $response,
@@ -158,13 +194,17 @@ class Device {
                 ], $args)
             );
 
-        } else {
+        } else { // new
             return $response->withStatus(302)->withHeader('Location', '/admin/device/new?staMac=' . $args['staMac']);
         }
     }
 
     /**
-     * POST /admin/device/{STA-Mac}/edit
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     * @throws \Exception
      */
     public function update(Request $request, Response $response, $args) {
 
@@ -217,8 +257,16 @@ class Device {
         }
     }
 
-    // DELETE /admin/device/{STA-Mac}
-    // POST /admin/device/{STA-Mac}/delete
+    /**
+     * DELETE /admin/device/{STA-Mac}
+     * POST /admin/device/{STA-Mac}/delete
+     *
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     * @throws \Exception
+     */
     public function delete(Request $request, Response $response, $args) {
 
         $userName = explode(':', $request->getUri()->getUserInfo())[0];
@@ -249,11 +297,17 @@ class Device {
         return $response->withStatus(404)->withHeader('Location', '/admin/devices?msg=' . 'Trial to delete unknown device ' . $device->getMac());
     }
 
+    /**
+     * @param array $formData
+     * @param bool $isUpdate
+     * @return array validation messages, keys in analogy to the expected form-data keys
+     * @throws \Exception
+     */
     private function validate($formData, $isUpdate = false) {
 
         $msgs = array();
 
-        // formData contains valid mac
+        // formData contains no or invalid mac
         if (empty($formData['mac'])) {
             $msgs['mac'] = 'Keine Mac-Adresse angegeben!';
         } else if (!$this->repository->isValidMac($formData['mac'])) {
@@ -266,11 +320,11 @@ class Device {
                 $msgs['mac'] = 'You tried to change the mac-address of the device to "' . $formData['mac'] . '", but this mac-address already exists!';
             }
         }
-        // postData contains any esp type
+        // formData contains no esp type
         if (empty($formData['type'])) {
             $msgs['type'] = 'Keine ESP-Version angegeben!';
         }
-        // postData contains any info
+        // formData contains no info
         if (empty($formData['info'])) {
             $msgs['info'] = 'Keine weiteren Informationen zum ESP angegeben!';
         }

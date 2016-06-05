@@ -4,9 +4,15 @@
   - edit the usernames and passwords
   - !!! never checkin/commit this file to git nor github or any other SCM if latter is not secured and just available to persons you trust! ;)
   - and - please! - delete the example users - any user given here has full access to anything ;)
+
+  To generate the password hashes use the implizit php function password_hash. E. g.
+  <code>
+    <?php
+      $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
+  </code)
 */
 $authorizedAdminUsers = [
-    // userame => password
-    "user1"    => "123456",
-    "user2"    => "123456"
+    // userame => password_hash
+    "user1"    => "$2y$10$st/g2oh2cA/8MXmNNO08cuBae/lmsEKSe1BOojm6GppQ9EQBYv8xi",
+    "user2"    => "$2y$10$st/g2oh2cA/8MXmNNO08cuBae/lmsEKSe1BOojm6GppQ9EQBYv8xi"
 ];

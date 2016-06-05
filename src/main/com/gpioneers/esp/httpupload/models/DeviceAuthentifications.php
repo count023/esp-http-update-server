@@ -14,7 +14,7 @@ class DeviceAuthentifications {
     /**
      * @var Devices
      */
-    private $repository;
+    private $deviceRepository;
 
     /**
      * @var string
@@ -23,24 +23,29 @@ class DeviceAuthentifications {
 
     /**
      * constant time difference between the authentification request and the request to download a new version if available
+     *
+     * @var int contant
      */
     const MAXIMAL_TIME_DIFFERENCE = 23; // 23 seconds. Why "23"? Well, it's a marvelous number ;)
 
-    public function __construct(LoggerInterface $logger) {
+    /**
+     * DeviceAuthentifications constructor.
+     * @param Devices $deviceRepository
+     * @param LoggerInterface $logger
+     */
+    public function __construct(Devices $deviceRepository, LoggerInterface $logger) {
         $this->logger = $logger;
-        $this->repository = new Devices($this->logger);
+        $this->deviceRepository = $deviceRepository;
     }
 
     /**
-     * @param $staMac mac address (Sta-Mac) of device
-     * @return DeviceAuthentification || null if provided $staMac is not known
-     *
+     * @param Device $device
+     * @return DeviceAuthentification|null if provided $staMac is not known
      * @throws \Exception if given $staMac is invlid
      * @throws \Exception if given $staMac authentificationFile is not accessible
      */
-    public function load($staMac) {
+    public function load(Device $device) {
 
-        $device = $this->repository->load($staMac);
         if ($device->isExisting() && $device->isValid() && is_file($this->getDeviceAuthentificationPath($device))) {
 
             $deviceAuthentificationFileHandle = fopen($this->getDeviceAuthentificationPath($device), 'r');
@@ -70,7 +75,9 @@ class DeviceAuthentifications {
     }
 
     /**
-     * .@param DeviceAuthentification $deviceAuthentification
+     * @param DeviceAuthentification $deviceAuthentification
+     * @return bool
+     * @throws \Exception
      */
     public function save(DeviceAuthentification $deviceAuthentification) {
         $json = $this->getDeviceAuthentificationAsJson($deviceAuthentification);
@@ -92,8 +99,23 @@ class DeviceAuthentifications {
 
     /**
      * @param DeviceAuthentification $deviceAuthentification
-     * @param array $headerInfos
-     * @return boolean
+     * @throws \Exception
+     */
+    public function delete(DeviceAuthentification $deviceAuthentification) {
+        if (is_file($this->getDeviceAuthentificationPath($deviceAuthentification->getDevice()))) {
+            if (@unlink($this->getDeviceAuthentificationPath($deviceAuthentification->getDevice()))) {
+                $this->logger->addInfo('Deleted authentification-file of device with mac: ' . $deviceAuthentification->getDevice()->getMac());
+          } else {
+              // bubble up error
+              throw new \Exception('Failed deleting authentification-file of device with mac: ' . $deviceAuthentification->getDevice()->getMac());
+          }
+        }
+    }
+
+    /**
+     * @param DeviceAuthentification $deviceAuthentification
+     * @param $headerInfos
+     * @return bool
      */
     public function authenticate(DeviceAuthentification $deviceAuthentification, $headerInfos) {
 
@@ -106,7 +128,8 @@ class DeviceAuthentifications {
     }
 
     /**
-     * @param DeviceAuthentification
+     * @param DeviceAuthentification $deviceAuthentification
+     * @return string
      */
     public function getDeviceAuthentificationAsJson(DeviceAuthentification $deviceAuthentification) {
         return json_encode(
@@ -119,8 +142,12 @@ class DeviceAuthentifications {
         );
     }
 
+    /**
+     * @param Device $device
+     * @return string
+     */
     public function getDeviceAuthentificationPath(Device $device) {
-        return $this->repository->getDeviceDirectoryPath($device) . $this->authentificationFileName;
+        return $this->deviceRepository->getDeviceDirectoryPath($device) . $this->authentificationFileName;
     }
 
 }

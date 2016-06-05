@@ -29,12 +29,15 @@ class DeviceAuthentification {
      */
     protected $deviceVersionRepository;
 
-    // Constructor
+    /**
+     * DeviceAuthentification constructor.
+     * @param ContainerInterface $ci
+     */
     public function __construct(ContainerInterface $ci) {
         $this->ci = $ci;
-        $this->repository = new DeviceAuthentifications($this->ci->logger);
         $this->deviceRepository = new Devices($this->ci->logger);
-        $this->deviceVersonRepository = new DeviceVersions($this->ci->logger);
+        $this->deviceVersionRepository = new DeviceVersions($this->ci->logger);
+        $this->repository = new DeviceAuthentifications($this->deviceRepository, $this->ci->logger);
     }
 
     /**
@@ -61,6 +64,10 @@ class DeviceAuthentification {
      * </code></pre>
      * if a device with mac 00:00:00:00:00:00 already exists ...
      *
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
      */
     public function authenticate(Request $request, Response $response, $args) {
 
@@ -101,24 +108,29 @@ class DeviceAuthentification {
     }
 
     /**
-    * handling request by ESP8266httpUpdate library
-    *
-    * _!NO!_ BasicAuth here!
-    *
-    * header fields available on httpUpdateRequest from ESP along
-    * https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266httpUpdate/src/ESP8266httpUpdate.cpp#L173
-    * <pre><code>
-    *    http.setUserAgent(F("ESP8266-http-Update"));
-    *    http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
-    *    http.addHeader(F("x-ESP8266-AP-MAC"), WiFi.softAPmacAddress());
-    *    http.addHeader(F("x-ESP8266-free-space"), String(ESP.getFreeSketchSpace()));
-    *    http.addHeader(F("x-ESP8266-sketch-size"), String(ESP.getSketchSize()));
-    *    http.addHeader(F("x-ESP8266-chip-size"), String(ESP.getFlashChipRealSize()));
-    *    http.addHeader(F("x-ESP8266-sdk-version"), ESP.getSdkVersion());
-    *    http.addHeader(F("x-ESP8266-mode"), F("sketch"));
-    *    http.addHeader(F("x-ESP8266-version"), currentVersion);
-    * </code></pre>
-    */
+     * handling request by ESP8266httpUpdate library
+     *
+     * _!NO!_ BasicAuth here!
+     *
+     * header fields available on httpUpdateRequest from ESP along
+     * https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266httpUpdate/src/ESP8266httpUpdate.cpp#L173
+     * <pre><code>
+     *    http.setUserAgent(F("ESP8266-http-Update"));
+     *    http.addHeader(F("x-ESP8266-STA-MAC"), WiFi.macAddress());
+     *    http.addHeader(F("x-ESP8266-AP-MAC"), WiFi.softAPmacAddress());
+     *    http.addHeader(F("x-ESP8266-free-space"), String(ESP.getFreeSketchSpace()));
+     *    http.addHeader(F("x-ESP8266-sketch-size"), String(ESP.getSketchSize()));
+     *    http.addHeader(F("x-ESP8266-chip-size"), String(ESP.getFlashChipRealSize()));
+     *    http.addHeader(F("x-ESP8266-sdk-version"), ESP.getSdkVersion());
+     *    http.addHeader(F("x-ESP8266-mode"), F("sketch"));
+     *    http.addHeader(F("x-ESP8266-version"), currentVersion);
+     * </code></pre>
+     *
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     */
     public function download(Request $request, Response $response, $args) {
 
         $headerValues = $this->getRelevantHeaderValues($request);
@@ -129,7 +141,7 @@ class DeviceAuthentification {
                 $device = $this->deviceRepository->load($headerValues['staMac'][0]);
                 if ($device->isExisting() && $device->isValid()) {
 
-                    $deviceAuthentification = $this->repository->load($headerValues['staMac'][0]);
+                    $deviceAuthentification = $this->repository->load($device);
                     if ($deviceAuthentification !== null) {
 
                         // check timestamp aso...
@@ -144,9 +156,9 @@ class DeviceAuthentification {
                             )
                         ) {
                             // check version
-                            $highestVersion = $this->getHighestVersion($device);
+                            $highestVersion = $this->deviceRepository->getHighestVersion($device);
                             if ($highestVersion->getVersion() > $headerValues['version'][0]) {
-                                $filePath = $this->deviceVersonRepository->getDeviceVersionImagePath($device, $highestVersion);
+                                $filePath = $this->deviceVersionRepository->getDeviceVersionImagePath($device, $highestVersion);
                                 // send binary image - the old way ... quite short and sweet ;)
                                 header("HTTP/1.1 200 OK");
                                 header("Content-Type: application/octet-stream");
@@ -162,7 +174,7 @@ class DeviceAuthentification {
                     }
                     // send 401 Not Authorized
                     return $response->withStatus(401);
-                }
+                } // else would be 404 Not Found ... see below
             } catch (\Exception $ex) { // schematically invalid mac-address
                 // send 400 Bad Request
                 return $response->withStatus(400);
@@ -172,7 +184,11 @@ class DeviceAuthentification {
         return $response->withStatus(404);
     }
 
-    private function getRelevantHeaderValues(Request$request) {
+    /**
+     * @param Request $request
+     * @return array
+     */
+    private function getRelevantHeaderValues(Request $request) {
         $headerValues = array();
         $headerValues['staMac'] = $request->getHeader('x-ESP8266-STA-MAC');
         $headerValues['apMac'] = $request->getHeader('x-ESP8266-AP-MAC');
@@ -182,6 +198,10 @@ class DeviceAuthentification {
         return $headerValues;
     }
 
+    /**
+     * @param $headerValues array of request header fields
+     * @param $args array framework request arguments as provided bei slim 3
+     */
     private function isValidRequest($headerValues, $args) {
         return (
             count($headerValues['staMac']) >= 1 &&
@@ -191,17 +211,4 @@ class DeviceAuthentification {
             count($headerValues['version']) >= 1
         );
     }
-
-    /**
-     * @param Device $device
-     */
-    private function getHighestVersion(Device $device) {
-        $versions = $device->getVersions();
-        usort($versions, function ($deviceVersionA, $deviceVersionB) {
-            return strcmp($deviceVersionA->getVersion(), $deviceVersionB->getVersion());
-        });
-        $highestVersion = array_pop(array_values($versions));
-        return $highestVersion;
-    }
-
 }

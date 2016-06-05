@@ -12,7 +12,7 @@ $app->post('/device/authenticate/{staMac:[0-9a-fA-F\:]*}', '\\com\\gpioneers\\es
 
 // public {
 
-// GET /download -> requires temporarily available athorization
-$app->get('/device/{staMac:[0-9a-fA-F\:]*}/download', '\\com\\gpioneers\\esp\\httpupload\\controllers\\DeviceAuthentification:download');
+// GET /update -> requires temporarily available authorization
+$app->get('/device/update/{staMac:[0-9a-fA-F\:]*}', '\\com\\gpioneers\\esp\\httpupload\\controllers\\DeviceAuthentification:download');
 
 // } // public

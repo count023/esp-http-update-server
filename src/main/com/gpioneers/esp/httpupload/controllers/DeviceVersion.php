@@ -7,23 +7,44 @@ use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
 use \com\gpioneers\esp\httpupload\models\Devices;
+use \com\gpioneers\esp\httpupload\models\Device as DeviceModel;
 use \com\gpioneers\esp\httpupload\models\DeviceVersions;
 
 class DeviceVersion {
 
+    /**
+     * @var ContainerInterface
+     */
     protected $ci;
+    /**
+     * @var Devices
+     */
     protected $parentRepository;
+    /**
+     * @var DeviceVersions
+     */
     protected $repository;
 
-    // Constructor
+    /**
+     * DeviceVersion constructor.
+     * @param ContainerInterface $ci
+     */
     public function __construct(ContainerInterface $ci) {
         $this->ci = $ci;
         $this->parentRepository = new Devices($this->ci->logger);
         $this->repository = new DeviceVersions($this->ci->logger);
     }
 
-    // GET /admin/{STA-Mac}/version/new
-    // GET /admin/device/{STA-Mac}/version/{version}/edit
+    /**
+     * GET /admin/{STA-Mac}/version/new
+     * GET /admin/device/{STA-Mac}/version/{version}/edit
+     *
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     * @throws \Exception
+     */
     public function showForm(Request $request, Response $response, $args) {
 
         $defaults = array(
@@ -69,7 +90,15 @@ class DeviceVersion {
         }
     }
 
-    // POST /admin/{STA-Mac}/version/new
+    /**
+     * POST /admin/{STA-Mac}/version/new
+     *
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     * @throws \Exception
+     */
     public function create(Request $request, Response $response, $args) {
 
         $defaults = array(
@@ -129,8 +158,16 @@ class DeviceVersion {
         }
     }
 
-    // GET /admin/{STA-Mac}/version/{version}(known)
-    // GET /admin/{STA-Mac}/version/{version}(unknown)
+    /**
+     * GET /admin/{STA-Mac}/version/{version}(known)
+     * GET /admin/{STA-Mac}/version/{version}(unknown)
+     *
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     * @throws \Exception
+     */
     public function read(Request $request, Response $response, $args) {
 
         $defaults = array(
@@ -146,7 +183,7 @@ class DeviceVersion {
                 $deviceVersion = $this->repository->load($device, $args['version']);
             } catch (Exception $e) {
                 $deviceVersion = $this->repository->load($device, null);
-                $deviceVersion->setMac($args['version']);
+                $deviceVersion->setVersion($args['version']);
             }
 
             if ($deviceVersion->isExisting()) {
@@ -169,7 +206,15 @@ class DeviceVersion {
         }
     }
 
-    // POST /admin/device/{STA-Mac}/version/{version}/edit
+    /**
+     * POST /admin/device/{STA-Mac}/version/{version}/edit
+     *
+     * @param Request $request
+     * @param Response $response
+     * @param array $args as provided by slim 3
+     * @return Response
+     * @throws \Exception
+     */
     public function update(Request $request, Response $response, $args) {
 
         $defaults = array(
@@ -187,11 +232,19 @@ class DeviceVersion {
             $msgs = $this->validate($device, $formData, true);
             if (!empty($msgs)) {
 
-                $currentDeviceVersion = $this->repository->load($device, $formData['currentVersion']);
+                $currentDeviceVersion = $device->getVersion($formData['currentVersion']); //$this->repository->load($device, $formData['currentVersion']);
+                if ($currentDeviceVersion === null) {
+                    throw new \Exception('Trial to update not existing version! ("' . $formData['currentVersion'] . '")');
+                }
                 $newDeviceVersion = null;
-                if (!empty($msgs['version'])) {
-                    $newDeviceVersion = $this->repository->load($device, null);
-                    $newDeviceVersion->setVersion($formData['version']);
+                if (!empty($msgs['version'])) { // empty or invalid version or new version already exists
+                    $existingVersion = $device->getVersion($formData['version']);
+                    if ($existingVersion !== null) {
+                        $newDeviceVersion = $existingVersion;
+                    } else {
+                        $newDeviceVersion = $this->repository->load($device, null);
+                        $newDeviceVersion->setVersion($formData['version']);
+                    }
                 } else {
                     $newDeviceVersion = $this->repository->load($device, $formData['version']);
                 }
@@ -199,8 +252,9 @@ class DeviceVersion {
                 $newDeviceVersion->setDescription($formData['description']);
 
                 if ($currentDeviceVersion->getVersion() !== $newDeviceVersion->getVersion() && $newDeviceVersion->isExisting()) {
-                    // resetting the mac-address to the old valid one!
-                    $newDevice->setVerson($currentDeviceVersion->getVersion());
+                    // resetting the version number to the old valid one!
+                    $this->ci->logger->addDebug('resetting the version number to the old valid one!');
+                    $newDeviceVersion->setVersion($currentDeviceVersion->getVersion());
                 }
 
                 return $this->ci->renderer->render(
@@ -226,12 +280,21 @@ class DeviceVersion {
                 return $response->withStatus(302)->withHeader('Location', '/admin/device/' . $device->getMac() . '/version/' . $newDeviceVersion->getVersion() . '?msg=' . ($success ? 'Sucessfully updated' : 'Updating failed'));
             }
         } else {
-            return $response->withStatus(302)->withHeader('Location', '/admin/device/new');
+            return $response->withStatus(302)->withHeader('Location', '/admin/device/new?staMac=' . $args['staMac']);
         }
     }
 
-    // DELETE /admin/device/{STA-Mac}/version/{version}
-    // POST /admin/device/{STA-Mac}/version/{version}/delete
+    /**
+     * DELETE /admin/device/{STA-Mac}/version/{version}
+     * POST /admin/device/{STA-Mac}/version/{version}/delete
+     *
+     * @param Request $request
+     * @param Response $response
+     * @param $args
+     * @param array $args as provided by slim 3
+     * @return Response
+     * @throws \Exception
+     */
     public function delete(Request $request, Response $response, $args) {
 
       $userName = explode(':', $request->getUri()->getUserInfo())[0];
@@ -243,7 +306,7 @@ class DeviceVersion {
           $deviceVersion = null;
           try {
               $deviceVersion = $this->repository->load($device, $args['version']);
-          } catch (Exception $e) {
+          } catch (\Exception $e) {
               return $response->withStatus(404)->withHeader('Location', '/admin/devices?msg=' . 'Trial to delete unknown device (' . $device->getMac() . ') version (' . $args['version'] . ')');
           }
 
@@ -269,7 +332,8 @@ class DeviceVersion {
 
     /**
      * @param string $staMac
-     * @return \com\gpioneers\esp\httpupload\models\Device || null if device does not exist or given ,mac is invalid
+     * @return \com\gpioneers\esp\httpupload\models\Device|null if device does not exist or given ,mac is invalid
+     * @throws \Exception
      */
     private function loadDevice($staMac) {
         $device = null;
@@ -283,12 +347,13 @@ class DeviceVersion {
     }
 
     /**
-     * @param Device $device
+     * @param \com\gpioneers\esp\httpupload\models\Device $device
      * @param array $formData
-     * @param boolean $isUpdate, optional
+     * @param bool $isUpdate optional
      * @return array validation messages, keys in analogy to the expected form-data keys
+     * @throws \Exception
      */
-    private function validate($device, $formData, $isUpdate = false) {
+    private function validate(DeviceModel $device, $formData, $isUpdate = false) {
 
         $msgs = array();
 
@@ -298,12 +363,14 @@ class DeviceVersion {
         } else if (!$this->repository->isValidVersion($formData['version'])) {
             $msgs['version'] = 'Ungültige Version angegeben!';
         } else {
-            $device = $this->parentRepository->load($device->getMac());
-            $newDeviceVersion = $this->repository->load($device, $formData['version']);
-            if (!$isUpdate && $newDeviceVersion->isExisting()) {
-                $msgs['version'] = 'Diese Version existiert bereits!';
-            } else if ($isUpdate && $formData['version'] !== $formData['currentVersion'] && $newDeviceVersion->isExisting()) {
-                $msgs['version'] = 'You tried to change the version number to "' . $formData['version'] . '", but this version already exists!';
+            # $device = $this->parentRepository->load($device->getMac());
+            $newDeviceVersion = $device->getVersion($formData['version']); // $this->repository->load($device, $formData['version']);
+            if ($newDeviceVersion !== null) {
+                if (!$isUpdate && $newDeviceVersion->isExisting()) {
+                    $msgs['version'] = 'Diese Version existiert bereits!';
+                } else if ($isUpdate && $formData['version'] !== $formData['currentVersion'] && $newDeviceVersion->isExisting()) {
+                    $msgs['version'] = 'You tried to change the version number to "' . $formData['version'] . '", but this version already exists!';
+                }
             }
         }
         // postData contains any software name
@@ -332,5 +399,4 @@ class DeviceVersion {
 
         return $msgs;
     }
-
 }

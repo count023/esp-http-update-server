@@ -6,20 +6,40 @@ use Psr\Log\LoggerInterface;
 
 class Devices {
 
+    /**
+     * @var LoggerInterface
+     */
     private $logger;
 
-    protected $subRepository;
+    /**
+     * @var DeviceVersions
+     */
+    protected $versionsRepository;
+
+    /**
+     * @var DeviceAuthentifications
+     */
+    protected $authentificationsRepository;
 
     /**
      * @var string
      */
     private $infoFileName = 'info.json';
 
+    /**
+     * Devices constructor.
+     * @param LoggerInterface $logger
+     */
     public function __construct(LoggerInterface $logger) {
         $this->logger = $logger;
-        $this->subRepository = new DeviceVersions($logger);
+        $this->versionsRepository = new DeviceVersions($logger);
+        $this->authentificationsRepository = new DeviceAuthentifications($this, $logger);
     }
 
+    /**
+     * @return array
+     * @throws \Exception
+     */
     public function getAll() {
 
         $deviceDirs = array_filter(
@@ -39,6 +59,11 @@ class Devices {
         return $devices;
     }
 
+    /**
+     * @param Device $device
+     * @return bool
+     * @throws \Exception
+     */
     public function save(Device $device) {
         if (!is_dir($this->getDeviceDirectoryPath($device))) {
             mkdir($this->getDeviceDirectoryPath($device));
@@ -61,9 +86,14 @@ class Devices {
         return $success;
     }
 
+    /**
+     * @param Device $currentDevice
+     * @param Device $newDevice
+     * @return bool
+     * @throws \Exception
+     */
     public function update(Device $currentDevice, Device $newDevice) {
 
-        // @TODO: rename() is not working for not empty directories ... try call system ...
         if ($currentDevice->getMac() !== $newDevice->getMac()) {
 
             $oldPath = str_replace(':', '\:', $this->getDeviceDirectoryPath($currentDevice));
@@ -77,7 +107,9 @@ class Devices {
     }
 
     /**
+     * @param $mac
      * @return Device
+     * @throws \Exception
      */
     public function load($mac) {
 
@@ -110,7 +142,11 @@ class Devices {
 
                 $device->setExisting(true);
 
-                $device->setVersions($this->subRepository->getAll($device));
+                $device->setVersions($this->versionsRepository->getAll($device));
+                $deviceAuthentification= $this->authentificationsRepository->load($device);
+                if ($deviceAuthentification !== null) {
+                    $device->setAuthentification($deviceAuthentification);
+                }
             }
         }
 
@@ -118,6 +154,7 @@ class Devices {
     }
 
     /**
+     * @param Device $device
      * @return void
      * @throws \Exception if info file or base-folder do not exist
      *
@@ -127,7 +164,12 @@ class Devices {
     public function delete(Device $device) {
 
         foreach ($device->getVersions() as $version) {
-            $this->subRepository->delete($device, $version);
+            $this->versionsRepository->delete($device, $version);
+        }
+
+        $deviceAuthentification = $device->getAuthentification();
+        if ($deviceAuthentification !== null) {
+            $this->authentificationsRepository->delete($deviceAuthentification);
         }
 
         // unlink $device->getInfoPath()
@@ -135,23 +177,23 @@ class Devices {
 
             $this->logger->addInfo('Deleted info-file of device with mac: ' . $device->getMac());
 
-            // rmdir $device->getDirectoryPath()
-            if (@rmdir($this->getDeviceDirectoryPath($device))) {
-
-                $this->logger->addInfo('Deleted directory of device with mac: ' . $device->getMac());
-
-            }
-            // @codeCoverageIgnoreStart
-            // not testable; file needs to be changed externaly to come into this state
-            else {
-                // bubble up error
-                throw new \Exception('Failed deleting directory of device with mac: ' . $device->getMac());
-            }
-            // @codeCoverageIgnoreEnd
         } else {
             // bubble up error
             throw new \Exception('Failed deleting info-file of device with mac: ' . $device->getMac());
         }
+        // rmdir $device->getDirectoryPath()
+        if (@rmdir($this->getDeviceDirectoryPath($device))) {
+
+            $this->logger->addInfo('Deleted directory of device with mac: ' . $device->getMac());
+
+        }
+        // @codeCoverageIgnoreStart
+        // not testable; file needs to be changed externaly to come into this state
+        else {
+            // bubble up error
+            throw new \Exception('Failed deleting directory of device with mac: ' . $device->getMac());
+        }
+        // @codeCoverageIgnoreEnd
     }
 
     /**
@@ -161,6 +203,10 @@ class Devices {
         return preg_match('/^([0-9A-F]{2}:){5}([0-9A-F]{2})$/i', $mac) === 1;
     }
 
+    /**
+     * @param Device $device
+     * @return string
+     */
     public function getDeviceInfoAsJson(Device $device) {
         return json_encode(array(
             'type' => $device->getType(),
@@ -168,6 +214,11 @@ class Devices {
         ));
     }
 
+    /**
+     * @param Device $device
+     * @return string
+     * @throws \Exception
+     */
     public function getDeviceInfoPath(Device $device) {
         if (empty($device->getMac())) {
             $this->logger->addError('Access to empty $mac of ' . get_class($device) . '. Probably using not fully initialized ' . get_class($device) . '?');
@@ -176,8 +227,24 @@ class Devices {
         return $this->getDeviceDirectoryPath($device) . $this->infoFileName;
     }
 
+    /**
+     * @param Device $device
+     * @return string
+     */
     public function getDeviceDirectoryPath(Device $device) {
         return DATA_DIR . $device->getMac() . DIRECTORY_SEPARATOR;
     }
 
+    /**
+     * @param Device $device
+     * @return string
+     */
+    public function getHighestVersion(Device $device) {
+        $versions = $device->getVersions();
+        usort($versions, function ($deviceVersionA, $deviceVersionB) {
+            return strcmp($deviceVersionA->getVersion(), $deviceVersionB->getVersion());
+        });
+        $highestVersion = array_pop(array_values($versions));
+        return $highestVersion;
+    }
 }
