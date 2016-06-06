@@ -1,6 +1,6 @@
 <?php include('../templates/includes/html-head.phtml'); ?>
 
-<h1>ESP8266 für httpUpdate einrichten:</h1>
+<h1>Create / Update Device:</h1>
 
 <?php
     # echo '<pre><code>';
@@ -30,7 +30,7 @@
         <p class="form__field__error-message"><?php echo $msgMac ?></p>
     </fieldset>
     <fieldset class="form__fieldset form__fieldset--type-select <?php echo !empty($data['msgs']['type']) ? 'form__fieldset--error' : '' ?>">
-        <label class="form__field__label" for="mac">Typ:</label>
+        <label class="form__field__label" for="mac">Type:</label>
         <select class="form__field form__field--type-select" name="type" id="type" >
             <option value="ESP-01" <?php echo $data['device']->getType() === 'ESP-01' ? 'selected' : '' ?>>ESP-01</option>
             <option value="ESP-201"<?php echo $data['device']->getType() === 'ESP-201' ? 'selected' : '' ?>>ESP-201</option>
@@ -40,12 +40,12 @@
         <p class="form__field__error-message"><?php $msgType ?></p>
     </fieldset>
     <fieldset class="form__fieldset form__fieldset--type-textarea <?php echo !empty($data['msgs']['info']) ? 'form__fieldset--error' : '' ?>">
-        <label class="form__field__label" for="info">ESP-Name/Nummer, Standort:</label>
-        <textarea class="form__field form__field--type-textarea" placeholder="Mehr Informationen zum ESP" name="info" id="info"><?php echo $data['device']->getInfo() ?></textarea>
+        <label class="form__field__label" for="info">ESP-name/number, location:</label>
+        <textarea class="form__field form__field--type-textarea" placeholder="More informationen about the device" name="info" id="info"><?php echo $data['device']->getInfo() ?></textarea>
         <p class="form__field__error-message"><?php echo $msgInfo ?></p>
     </fieldset>
     <fieldset class="form__fieldset form__fieldset--type-button">
-        <button class="form__field form__field--type-button--submit" type="submit">Senden</button>
+        <button class="form__field form__field--type-button--submit" type="submit">Send</button>
     </fieldset>
 </form>
 

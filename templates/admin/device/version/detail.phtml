@@ -4,7 +4,7 @@
     <p class="message"><?php echo $data['msg']; ?></p>
 <?php } ?>
 
-<h1>Version for <?php echo $data['device']->getMac(); ?> wih number <?php echo $data['deviceVersion']->getVersion() ?></h1>
+<h1><span class="headline__main">Version number <?php echo $data['deviceVersion']->getVersion() ?></span> for device <?php echo $data['device']->getMac(); ?></h1>
 
 <div class="detail">
     <dl class="detail__device <?php echo strtolower($data['device']->getType()) ?>">
@@ -26,8 +26,8 @@
 </div>
 
 <ul class="page-navigation">
-    <li><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/version/<?php echo $data['deviceVersion']->getVersion() ?>/edit">Ändern</a></li>
-    <li><form action="/admin/device/<?php echo $data['device']->getMac(); ?>/version/<?php echo $data['deviceVersion']->getVersion() ?>/delete" method="post"><button type="submit">Löschen</button></form></li>
+    <li class="page-navigation__item"><a href="/admin/device/<?php echo $data['device']->getMac(); ?>/version/<?php echo $data['deviceVersion']->getVersion() ?>/edit" class="button button--edit">Ändern</a></li>
+    <li class="page-navigation__item"><form action="/admin/device/<?php echo $data['device']->getMac(); ?>/version/<?php echo $data['deviceVersion']->getVersion() ?>/delete" method="post"><button type="submit" class="button button--delete">Löschen</button></form></li>
 </ul>
 
 <?php include('../templates/includes/html-foot.phtml'); ?>

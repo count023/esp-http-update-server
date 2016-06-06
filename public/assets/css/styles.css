@@ -14,6 +14,10 @@ nav {
     top: 0;
 }
 
+.headline__main {
+    font-size: 1.8em;
+}
+
 .form {
     background-color: rgba(255, 255, 255, 1);
     border: 1px solid rgba(128, 128, 128, .3);

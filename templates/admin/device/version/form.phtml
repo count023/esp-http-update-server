@@ -1,6 +1,6 @@
 <?php include('../templates/includes/html-head.phtml'); ?>
 
-<h1>Binär-Datei für einen ESP8266 mit httpUpdate bereitstellen:</h1>
+<h1>Add binary file for a device:</h1>
 
 <?php
      # echo '<pre><code>';
@@ -38,17 +38,17 @@
         <p class="form__field__error-message"><?php echo !empty($data['msgs']['softwareName']) ? $data['msgs']['softwareName'] : '' ?></p>
     </fieldset>
     <fieldset class="form__fieldset form__fieldset--type-textarea <?php echo !empty($data['msgs']['description']) ? 'form__fieldset--error' : '' ?>">
-        <label class="form__field__label" for="description">Beschreibung:</label>
-        <textarea class="form__field form__field--type-textarea" placeholder="- added Software-Feataures" name="description" id="description"><?php echo $deviceVersion->getDescription() ?></textarea>
+        <label class="form__field__label" for="description">Description:</label>
+        <textarea class="form__field form__field--type-textarea" placeholder="- added software-features" name="description" id="description"><?php echo $deviceVersion->getDescription() ?></textarea>
         <p class="form__field__error-message"><?php echo !empty($data['msgs']['description']) ? $data['msgs']['description'] : '' ?></p>
     </fieldset>
     <fieldset class="form__fieldset form__fieldset--type-file <?php echo !empty($data['msgs']['file']) ? 'form__fieldset--error' : '' ?>">
-        <label class="form__field__label" for="file">Binär-Datei:</label>
+        <label class="form__field__label" for="file">Binary-file:</label>
         <input class="form__field form__field--type-file" type="file" name="file" id="file" accept=".bin,application/octet-stream">
         <p class="form__field__error-message"><?php echo !empty($data['msgs']['file']) ? $data['msgs']['file'] : '' ?></p>
     </fieldset>
     <fieldset class="form__fieldset form__fieldset--type-button">
-        <button class="form__field form__field--type-button--submit" type="submit">Senden</button>
+        <button class="form__field form__field--type-button--submit" type="submit">Send</button>
     </fieldset>
 </form>
 
