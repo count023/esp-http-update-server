@@ -161,7 +161,7 @@ class DeviceAuthentification {
                         ) {
                             // check version
                             $highestVersion = $this->deviceRepository->getHighestVersion($device);
-                            if ($highestVersion->getVersion() > $headerValues['version'][0]) {
+                            if ($highestVersion !== null && $highestVersion->getVersion() > $headerValues['version'][0]) {
                                 $filePath = $this->deviceVersionRepository->getDeviceVersionImagePath($device, $highestVersion);
                                 // send binary image - the old way ... quite short and sweet ;)
                                 header("HTTP/1.1 200 OK");
