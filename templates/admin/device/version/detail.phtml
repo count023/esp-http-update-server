@@ -13,7 +13,7 @@
         <di class="detail__device--type__header">Type</di>
         <dd class="detail__device--type"><?php echo $data['device']->getType() ?></dd>
         <di class="detail__device--info__header">Info</di>
-        <dd class="detail__device--info"><p><?php echo $data['device']->getInfo() ?></p></dd>
+        <dd class="detail__device--info"><pre><?php echo $data['device']->getInfo() ?></pre></dd>
     </dl>
     <dl class="detail__device-version">
         <di class="detail__device-version--version__header">Version</di>
@@ -21,7 +21,7 @@
         <di class="detail__device-version--software-name__header">Software-Name</di>
         <dd class="detail__device-version--software-name"><?php echo $data['deviceVersion']->getSoftwareName() ?></dd>
         <di class="detail__device-version--description__header">Beschreibung</di>
-        <dd class="detail__device-version--description"><p><?php echo $data['deviceVersion']->getDescription() ?></p></dd>
+        <dd class="detail__device-version--description"><pre><?php echo $data['deviceVersion']->getDescription() ?></pre></dd>
     </dl>
 </div>
 

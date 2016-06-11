@@ -13,7 +13,7 @@
         <di class="detail__device__header detail__device--type">Type</di>
         <dd class="detail__device__data detail__device--type"><?php echo $data['device']->getType() ?></dd>
         <di class="detail__device__header detail--info">Info</di>
-        <dd class="detail__device__data detail__device--info"><p><?php echo $data['device']->getInfo() ?></p></dd>
+        <dd class="detail__device__data detail__device--info"><pre><?php echo $data['device']->getInfo() ?></pre></dd>
     </dl>
 <?php
     if (count($data['device']->getVersions()) > 0) {
@@ -29,7 +29,7 @@
         <di class="detail__device-version__header detail__device-version--software-name">Software-Name</di>
         <dd class="detail__device-version--software-name"><?php echo $deviceVersion->getSoftwareName() ?></dd>
         <di class="detail__device-version__header detail__device-version--description">Description</di>
-        <dd class="detail__device-version--description"><p><?php echo $deviceVersion->getDescription() ?></p></dd>
+        <dd class="detail__device-version--description"><pre><?php echo $deviceVersion->getDescription() ?></pre></dd>
     </dl>
 <?php
     }
