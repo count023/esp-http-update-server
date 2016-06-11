@@ -10,6 +10,9 @@ use \com\gpioneers\esp\httpupload\models\DeviceVersions;
 use \com\gpioneers\esp\httpupload\models\DeviceAuthentification as DeviceAuthentificationModel;
 use \com\gpioneers\esp\httpupload\models\DeviceAuthentifications;
 
+use \com\gpioneers\esp\httpupload\exceptions\InvalidMacException;
+use \com\gpioneers\esp\httpupload\exceptions\DeviceAuthentificationFileUnreadableException;
+
 class DeviceAuthentification {
 
     /**
@@ -178,17 +181,21 @@ class DeviceAuthentification {
                         } // else would be 401 Not Authorized ... see below
                     }
                     // send 401 Not Authorized
-                    $this->ci->logger->addInfo('DeviceAuthentification::download About to send 401; requested $mac: ' . $headerValues['staMac'][0]);
+                    $this->ci->logger->addError('DeviceAuthentification::download About to send 401; requested $mac: ' . $headerValues['staMac'][0]);
                     return $response->withStatus(401);
                 } // else would be 404 Not Found ... see below
-            } catch (\Exception $ex) { // schematically invalid mac-address
+            } catch (InvalidMacException $imex) { // schematically invalid mac-address
                 // send 400 Bad Request
                 $this->ci->logger->addInfo('DeviceAuthentification::download About to send 400; requested $mac: ' . $headerValues['staMac'][0]);
                 return $response->withStatus(400);
+            } catch (DeviceAuthentificationFileUnreadableException $dafnrex) {
+                // send 500 Server Error
+                $this->ci->logger->addCritical('DeviceAuthentification::download About to send 500; authentification file is not readable; requested $mac: ' . $headerValues['staMac'][0]);
+                return $response->withStatus(500);
             }
         }
         // send 404 Not Found
-        $this->ci->logger->addInfo('DeviceAuthentification::download About to send 404; invalid request with $mac: ' . $headerValues['staMac'][0]);
+        $this->ci->logger->addError('DeviceAuthentification::download About to send 404; invalid request with $mac: ' . $headerValues['staMac'][0]);
         return $response->withStatus(404);
     }
 
